@@ -1,0 +1,5 @@
+{
+	plugins:{
+		SSMSControllerSupport:"ssms.controller.EveryFrameCombatPlugin_Controller"
+	}
+}
