@@ -3,6 +3,7 @@
 ## Dependencies
 
 SSMSUnlock - https://github.com/razuhl/SSMSUnlock
+
 SSMSQoL - https://github.com/razuhl/SSMSQoL
 
 ## Features
@@ -18,7 +19,7 @@ Can't see my controller, controller stopped working. The controller must be plug
 
 Can I still use keyboard and mouse? Yes the controller works alongside them. Joysticks with few buttons will need the keyboard. In order to use the mouse the controller steering can be switched off during combat.
 
-###### Controller Setup
+## Controller Setup
 
 In the game menu from SSMSQoL is an option called "SSMSControllers". 
 The entry "Controller Mappings" is a list of configurations for installed controllers. 
@@ -52,7 +53,7 @@ with button: Button 9
 
 However which axis/button is which must be figured out manually or looked up through google. The framework in use is "DirectInpput".
 
-###### Default Controls
+## Default Controls
 
 * Using Target Next/Prev cycles through the available targets ordered by distance, whily the target is being selected the game pauses and continues after a second of no input. Pushing both targeting buttons at the same time clears the current target. Having a target allows weapons to aim for it instead, use advanced steering methods and omni shields will raise pointed at the target.
 * Broadsides can be selected by opening the controller menu during a battle. The ship will turn omni shields and itself if applicable to allow utilizing the weapons on the selected broadside.
