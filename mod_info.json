@@ -2,7 +2,7 @@
 	"id":"SSMSController",
 	"author":"Malte Schulze",
 	"name":"SSMS Controller",
-	"version":"1.0",
+	"version":"1.1",
 	"description":"This mod allows the use of a controller during battles. Requires the mod SSMS QoL and the tool SSMS Unlock.",
 	"gameVersion":"0.9.0",
 	"jars":["jars/SSMSController.jar"],

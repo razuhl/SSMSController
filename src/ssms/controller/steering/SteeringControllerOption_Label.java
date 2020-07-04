@@ -23,7 +23,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
+ * The name shown in the configuration dialog for the associated steering controller.
+ * 
  * @author Malte Schulze
  */
 @Retention(RetentionPolicy.RUNTIME)

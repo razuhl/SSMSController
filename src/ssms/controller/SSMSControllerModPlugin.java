@@ -50,13 +50,14 @@ import ssms.qol.properties.PropertyValueSetter;
 import ssms.controller.steering.SteeringControllerOption_AllowsEveryTarget;
 
 /**
- *
+ * Sets up configuration and application scoped persistency for the mod.
+ * 
  * @author Malte Schulze
  */
 public final class SSMSControllerModPlugin extends BaseModPlugin {
-    static public HandlerController controller;
+    static public HandlerController controller = new HandlerController();
     static public List<ControllerMapping> controllerMappings;
-    static public Class primarySteeringMode, alternativeSteeringMode;
+    static public Class primarySteeringMode = SteeringController_FreeFlight.class, alternativeSteeringMode = SteeringController_OrbitTarget.class;
     static public List<Class> registeredSteeringController = new ArrayList<Class>();
     
     @Override

@@ -25,11 +25,13 @@ import org.lwjgl.util.vector.ReadableVector2f;
 import org.lwjgl.util.vector.Vector2f;
 
 /**
- *
+ * Provides abstracted access to a game controller based on a {@link ssms.controller.ControllerMapping ControllerMapping}. 
+ * 
  * @author Malte Schulze
  */
 public class HandlerController {
     final public Controller controller;
+    final public ControllerMapping mapping;
     public float axisBtnConversionDeadzone, joystickDeadzone;
     protected int axisAccelerating, axisHeadingX, axisHeadingY, axisToggleFightersAndAutofire, axisSwitchWeaponGroup,
             btnTargetNxt, btnTargetPrevious, btnVenting, btnShieldOrCloak, btnUseSystem, btnFire, btnAlternateSteering, btnSelect, btnShowMenu,
@@ -43,6 +45,7 @@ public class HandlerController {
 
     public HandlerController(Controller controller, ControllerMapping mapping) {
         this.controller = controller;
+        this.mapping = mapping;
         Map<String,Integer> axisIndices = new HashMap<>();
         for ( int i = 0; i < controller.getAxisCount(); i++ ) {
             axisIndices.put(controller.getAxisName(i), i);
@@ -133,7 +136,7 @@ public class HandlerController {
     }
     
     public boolean isAccelerating() {
-        return ( btnAccelerate >= 0 ? controller.isButtonPressed(btnAccelerate) : false ) || isAcceleratingViaAxis();
+        return ( btnAccelerate >= 0 ? controller.isButtonPressed(btnAccelerate) : false ) || (accelerationInverted ? isAcceleratingBackwardsViaAxis() : isAcceleratingViaAxis());
     }
     
     protected boolean isAcceleratingViaAxis() {
@@ -141,7 +144,7 @@ public class HandlerController {
     }
     
     public boolean isAcceleratingBackwards() {
-        return ( btnAccelerateBackwards >= 0 ? controller.isButtonPressed(btnAccelerateBackwards) : false ) || isAcceleratingBackwardsViaAxis();
+        return ( btnAccelerateBackwards >= 0 ? controller.isButtonPressed(btnAccelerateBackwards) : false ) || (accelerationInverted ? isAcceleratingViaAxis() : isAcceleratingBackwardsViaAxis());
     }
     
     protected boolean isAcceleratingBackwardsViaAxis() {
@@ -186,7 +189,7 @@ public class HandlerController {
     }
 
     public boolean isToggleFighters() {
-        return ( btnToggleFighters >= 0 ? controller.isButtonPressed(btnToggleFighters) : false ) || isToggleFightersViaAxis();
+        return ( btnToggleFighters >= 0 ? controller.isButtonPressed(btnToggleFighters) : false ) || (fightersAutofireInverted ? isToggleAutofireViaAxis() : isToggleFightersViaAxis());
     }
     
     protected boolean isToggleFightersViaAxis() {
@@ -194,7 +197,7 @@ public class HandlerController {
     }
     
     public boolean isToggleAutofire() {
-        return ( btnToggleAutofire >= 0 ? controller.isButtonPressed(btnToggleAutofire) : false ) || isToggleAutofireViaAxis();
+        return ( btnToggleAutofire >= 0 ? controller.isButtonPressed(btnToggleAutofire) : false ) || (fightersAutofireInverted ? isToggleFightersViaAxis() : isToggleAutofireViaAxis());
     }
     
     protected boolean isToggleAutofireViaAxis() {
@@ -202,7 +205,7 @@ public class HandlerController {
     }
 
     public boolean isSelectNextWeaponGroup() {
-        return ( btnNextWeaponGroup >= 0 ? controller.isButtonPressed(btnNextWeaponGroup) : false ) || isSelectNextWeaponGroupViaAxis();
+        return ( btnNextWeaponGroup >= 0 ? controller.isButtonPressed(btnNextWeaponGroup) : false ) || (weaponGroupsInverted ? isSelectPreviousWeaponGroupViaAxis() : isSelectNextWeaponGroupViaAxis());
     }
     
     protected boolean isSelectNextWeaponGroupViaAxis() {
@@ -210,7 +213,7 @@ public class HandlerController {
     }
     
     public boolean isSelectPreviousWeaponGroup() {
-        return ( btnPrevWeaponGroup >= 0 ? controller.isButtonPressed(btnPrevWeaponGroup) : false ) || isSelectPreviousWeaponGroupViaAxis();
+        return ( btnPrevWeaponGroup >= 0 ? controller.isButtonPressed(btnPrevWeaponGroup) : false ) || (weaponGroupsInverted ? isSelectNextWeaponGroupViaAxis() : isSelectPreviousWeaponGroupViaAxis());
     }
     
     protected boolean isSelectPreviousWeaponGroupViaAxis() {

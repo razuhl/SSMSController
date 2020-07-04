@@ -23,6 +23,7 @@ import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.api.combat.ViewportAPI;
 import com.fs.starfarer.api.loading.DamagingExplosionSpec;
 import com.fs.starfarer.combat.CombatState;
+import com.fs.starfarer.loading.specs.M;
 import com.fs.starfarer.prototype.Utils;
 import com.fs.state.AppDriver;
 import org.lwjgl.opengl.GL11;
@@ -53,6 +54,13 @@ public class SteeringController_OrbitTarget extends SteeringController_Base {
     }
 
     @Override
+    public void discard() {
+        ps = null;
+        handler = null;
+        vDesiredHeadingLastValidInput = null;
+    }
+
+    @Override
     public void onTargetSelected() {
         desiredDistance = calculateDesiredDistanceForOrbitingTarget(ps);
     }
@@ -64,6 +72,8 @@ public class SteeringController_OrbitTarget extends SteeringController_Base {
 
     @Override
     public void steer(float timeAdvanced, float offsetFacingAngle) {
+        calculateAllowances(ps);
+        
         if ( handler.isAccelerating() ) {
             desiredDistance -= Math.max(ps.getEngineController().getMaxSpeedWithoutBoost(), 400f) * timeAdvanced;
             desiredDistance = Math.max(ps.getCollisionRadius() + ps.getShipTarget().getCollisionRadius(), desiredDistance);
@@ -81,7 +91,7 @@ public class SteeringController_OrbitTarget extends SteeringController_Base {
 
             //its possible that we should turn towards the target leading average of the current weapon group  instead of the ship location, 
             //so that rigid mounts are more likely to hit
-            turnToAngle(ps,Utils.Object(Vector2f.sub(ps.getShipTarget().getLocation(), ps.getLocation(), new Vector2f()))+offsetFacingAngle,timeAdvanced);
+            if ( allowTurning ) turnToAngle(ps,Utils.Object(Vector2f.sub(ps.getShipTarget().getLocation(), ps.getLocation(), new Vector2f()))+offsetFacingAngle,timeAdvanced);
 
             vDesiredHeadingLastValidInput = vDesiredHeading;
         }
@@ -146,6 +156,8 @@ public class SteeringController_OrbitTarget extends SteeringController_Base {
     }
     
     public void advance(float time, ReadableVector2f vDesiredHeading, float desiredDistance) {
+        if ( !allowAcceleration && !allowStrafe ) return;
+            
         MutableShipStatsAPI stats = ps.getMutableStats();
         float maxSpeed = Math.max(1f, stats.getMaxSpeed().getModifiedValue());
         float effectiveAcceleration = Math.max(1f, stats.getAcceleration().getModifiedValue());
@@ -154,6 +166,8 @@ public class SteeringController_OrbitTarget extends SteeringController_Base {
                 .getEffectiveStrafeAcceleration();
         
         Vector2f error = getAxisAcceleration(vDesiredHeading, desiredDistance, new Vector2f());
+        if ( !allowAcceleration ) error.x = 0;
+        if ( !allowStrafe ) error.y = 0;
         
         float targetAcceleration, targetStrafeAcceleration;
         if ( error.x > 0 ) {

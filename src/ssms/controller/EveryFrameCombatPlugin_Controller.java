@@ -67,7 +67,8 @@ import ssms.qol.ui.UIContext;
 import ssms.qol.ui.UIUtil;
 
 /**
- *
+ * Handles all controls for combat via game controller.
+ * 
  * @author Malte Schulze
  */
 public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugin {
@@ -79,11 +80,15 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
     protected boolean btnVentingDown = false, btnShieldDown = false, btnUseSystemDown = false, btnFighterToggleDown = false, btnToggleAutofireDown = false,
             isAlternateSteering = false, btnAlternateSteeringDown = false, btnSelectMenuEntryDown = false, btnDisplayMenuDown = false,
             btnTargetingBothDown = false, btnNextWeaponGroupDown = false, btnPrevWeaponGroupDown = false;
-    protected boolean displayMenu = false, nextMenuEntry = false, selectMenuEntry = false, enableControllerSteering = true, wasShowingWarroom = false, wasShieldOn = false;
+    protected boolean displayMenu = false, nextMenuEntry = false, selectMenuEntry = false, enableControllerSteering = true, wasShowingWarroom = false, wasShieldOn = false,
+            skipFrame = false;
     protected int selectedBtnIndex = -1;
     protected UIComponent_Parent root;
     protected ReadableVector2f vDesiredHeadingLastValidInput = new Vector2f();
     
+    /**
+     * Preserves per ship settings during combat.
+     */
     static protected class PlayerShipCache {
         ShipAPI ps;
         boolean hasFighters;
@@ -101,6 +106,7 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
                 createSteeringController(SSMSControllerModPlugin.primarySteeringMode, ps, gameController, engine);
             } catch (InstantiationException | IllegalAccessException ex) {
                 Global.getLogger(SSMSControllerModPlugin.class).log(Level.ERROR, "Primary Steering Mode contains a controller without a puclic no argument constructor! Using fallback controller.", ex);
+                if ( this.steeringController != null ) this.steeringController.discard();
                 this.steeringController = new SteeringController_FreeFlight();
                 this.steeringController.activate(ps, gameController, engine);
             }
@@ -113,6 +119,7 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
         void discard() {
             ps = null;
             hasFighters = false;
+            if ( this.steeringController != null ) this.steeringController.discard();
             steeringController = null;
             offsetFacingAngle = 0f;
         }
@@ -122,17 +129,25 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
                 createSteeringController(steeringMode, ps, gameController, engine);
             } catch (InstantiationException | IllegalAccessException ex) {
                 Global.getLogger(SSMSControllerModPlugin.class).log(Level.ERROR, "Steering Mode contains a controller without a puclic no argument constructor! Using fallback controller.", ex);
+                if ( this.steeringController != null ) this.steeringController.discard();
                 this.steeringController = new SteeringController_FreeFlight();
                 this.steeringController.activate(ps, gameController, engine);
             }
         }
         
         private void createSteeringController(Class steeringMode, ShipAPI ship, HandlerController gameController, CombatEngineAPI engine) throws InstantiationException, IllegalAccessException {
+            if ( this.steeringController != null ) {
+                this.steeringController.discard();
+                this.steeringController = null;
+            }
             this.steeringController = (SteeringController) steeringMode.newInstance();
-            this.steeringController.activate(ship, gameController, engine);
+            if ( !this.steeringController.activate(ship, gameController, engine) ) throw new InstantiationException("Activation failed!");
         }
     }
     
+    /**
+     * Preserves the targeting selection state.
+     */
     static protected class Targeting {
         List<ShipAPI> targets;
         int index;
@@ -184,10 +199,6 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
         }
     }
     
-    static protected interface SteeringMode {
-        void steer(ShipAPI ps, HandlerController controller, float timePassed);
-    }
-    
     @Override
     public void init(CombatEngineAPI engine) {
         this.engine = engine;
@@ -216,6 +227,7 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
         vDesiredHeadingLastValidInput = new Vector2f();
         desiredZoomFactor = 2f;
         wasShieldOn = false;
+        skipFrame = false;
     }
     
     protected ShipAPI getControlledShip() {
@@ -227,7 +239,11 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
     }
     
     protected boolean processShipInputs(ShipAPI ps) {
-        return ps != null && !displayMenu && enableControllerSteering && engine.isEntityInPlay(ps) && !ps.isHulk();
+        return ps != null && !displayMenu && enableControllerSteering && engine.isEntityInPlay(ps) && !ps.isHulk() && !ps.controlsLocked();
+    }
+    
+    protected boolean isControllerConfigured(HandlerController handler) {
+        return handler == null || handler.mapping != null;
     }
     
     protected void adjustZoom() {
@@ -271,13 +287,24 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
                 event.consume();
             }
         }*/
+        HandlerController handler = SSMSControllerModPlugin.controller;
+        if ( !isControllerConfigured(handler) ) {
+            if ( psCache != null ) psCache.discard();
+            if ( targeting != null ) {
+                targeting.discard();
+                targeting = null;
+                timeDilation(false,TDID_TARGETING);
+            }
+            skipFrame = true;
+            return;
+        } else {
+            if ( skipFrame ) skipFrame = false;
+        }
         
         if ( engine != null && engine.getContext() != null && !engine.getCombatUI().isShowingCommandUI() ) {
             if ( wasShowingWarroom ) {
                 adjustZoom();
             }
-            
-            HandlerController handler = SSMSControllerModPlugin.controller;
             handler.poll();
             
             if ( targeting != null && targeting.isExpired() ) {
@@ -393,20 +420,22 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
                         }
                         
                         Vector2f targetLocation;
-                        List<WeaponAPI> weapons = ps.getSelectedGroupAPI().getWeaponsCopy();
-                        for ( WeaponAPI weapon : weapons ) {
-                            if ( weapon.isDisabled() ) continue;
-                            if ( ps.getShipTarget() != null ) {
-                                targetLocation = targetLeading(weapon.getLocation(),ps.getShipTarget().getLocation(),ps.getShipTarget().getVelocity(),weapon.getProjectileSpeed(),v1);
-                            } else {
-                                targetLocation = targetFrontal(ps.getLocation(),weapon.getRange(),ps.getFacing(),v1);
+                        if ( ps.getSelectedGroupAPI() != null ) {
+                            List<WeaponAPI> weapons = ps.getSelectedGroupAPI().getWeaponsCopy();
+                            for ( WeaponAPI weapon : weapons ) {
+                                if ( weapon.isDisabled() ) continue;
+                                if ( ps.getShipTarget() != null ) {
+                                    targetLocation = targetLeading(weapon.getLocation(),ps.getShipTarget().getLocation(),ps.getShipTarget().getVelocity(),weapon.getProjectileSpeed(),v1);
+                                } else {
+                                    targetLocation = targetFrontal(ps.getLocation(),weapon.getRange(),ps.getFacing(),v1);
+                                }
+
+                                if ( targetLocation == null ) targetLocation = targetFrontal(ps.getLocation(),weapon.getRange(),ps.getFacing(),v1);
+
+                                ((R)weapon).getAimTracker().o00000(targetLocation);
                             }
-
-                            if ( targetLocation == null ) targetLocation = targetFrontal(ps.getLocation(),weapon.getRange(),ps.getFacing(),v1);
-
-                            ((R)weapon).getAimTracker().o00000(targetLocation);
+                            if ( handler.isFire() ) ps.giveCommand(ShipCommand.FIRE, v1, -1);
                         }
-                        if ( handler.isFire() ) ps.giveCommand(ShipCommand.FIRE, v1, -1);
                         
                         //start venting
                         if ( handler.isVenting() ) {
@@ -552,6 +581,7 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
 
     @Override
     public void renderInUICoords(ViewportAPI viewport) {
+        if ( skipFrame ) return;
         super.renderInUICoords(viewport);
         
         if ( displayMenu ) {
@@ -561,6 +591,7 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
     
     @Override
     public void renderInWorldCoords(ViewportAPI viewport) {
+        if ( skipFrame ) return;
         super.renderInWorldCoords(viewport);
         if ( psCache.steeringController != null ) {
             psCache.steeringController.renderInWorldCoords(viewport, offsetFacingAngle);
@@ -569,6 +600,7 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
     
     @Override
     public void advance(float amount, List<InputEventAPI> events) {
+        if ( skipFrame ) return;
         super.advance(amount, events);
         
         //If an omni shield was raised during the last frame we change its facing based on the selected broadside if no target is selected and otherwise facing the target

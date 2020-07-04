@@ -21,7 +21,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
+ * Stores information on how to interpret game controller signals.
+ * 
  * @author Malte Schulze
  */
 public class ControllerMapping {
@@ -33,6 +34,10 @@ public class ControllerMapping {
     public float axisBtnConversionDeadzone = 0.85f, joystickDeadzone = 0.25f;
     public Map<String,Object> customProperties = new HashMap<>();
     
+    /**
+     * Container that holds information for two exclusive or functionalities. They can be mapped to an axis or two buttons. 
+     * This increases the flexibility for different controller layouts.
+     */
     static public class AxisOrButton {
         public String axis;
         public boolean inverted;

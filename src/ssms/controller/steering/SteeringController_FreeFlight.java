@@ -22,6 +22,7 @@ import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.api.combat.ShipCommand;
 import com.fs.starfarer.api.combat.ViewportAPI;
 import com.fs.starfarer.combat.CombatState;
+import com.fs.starfarer.loading.specs.M;
 import com.fs.starfarer.prototype.Utils;
 import com.fs.state.AppDriver;
 import org.lwjgl.opengl.GL11;
@@ -45,6 +46,12 @@ public class SteeringController_FreeFlight extends SteeringController_Base {
         this.handler = controller;
         return true;
     }
+    
+    @Override
+    public void discard() {
+        ps = null;
+        handler = null;
+    }
 
     @Override
     public void onTargetSelected() {
@@ -58,19 +65,25 @@ public class SteeringController_FreeFlight extends SteeringController_Base {
 
     @Override
     public void steer(float timeAdvanced, float offsetFacingAngle) {
+        calculateAllowances(ps);
+        
         //turning the ship based on joystick and accelerating with the triggers
-        if ( handler.isAccelerating() ) {
-            ps.giveCommand(ShipCommand.ACCELERATE, null, -1);
-        } else if ( handler.isAcceleratingBackwards() ) {
-            ps.giveCommand(ShipCommand.ACCELERATE_BACKWARDS, null, -1);
-        } else if ( ps.getAcceleration() < 0.1f ) {
-            //if the player leaves the throttle idle close to zero we assume a full stop is desired
-            ps.giveCommand(ShipCommand.DECELERATE, null, -1);
+        if ( allowAcceleration ) {
+            if ( handler.isAccelerating() ) {
+                ps.giveCommand(ShipCommand.ACCELERATE, null, -1);
+            } else if ( handler.isAcceleratingBackwards() ) {
+                ps.giveCommand(ShipCommand.ACCELERATE_BACKWARDS, null, -1);
+            } else if ( ps.getAcceleration() < 0.1f ) {
+                //if the player leaves the throttle idle close to zero we assume a full stop is desired
+                ps.giveCommand(ShipCommand.DECELERATE, null, -1);
+            }
         }
-        ReadableVector2f vDesiredHeading = handler.getHeading();
-        if ( vDesiredHeading.getX() != 0 || vDesiredHeading.getY() != 0 ) {
-            float desiredFacing = Utils.Object((Vector2f)vDesiredHeading);
-            turnToAngle(ps,desiredFacing,timeAdvanced);
+        if ( allowTurning ) {
+            ReadableVector2f vDesiredHeading = handler.getHeading();
+            if ( vDesiredHeading.getX() != 0 || vDesiredHeading.getY() != 0 ) {
+                float desiredFacing = Utils.Object((Vector2f)vDesiredHeading);
+                turnToAngle(ps,desiredFacing,timeAdvanced);
+            }
         }
     }
 

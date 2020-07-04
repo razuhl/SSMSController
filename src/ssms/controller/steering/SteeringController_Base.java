@@ -18,12 +18,30 @@
 package ssms.controller.steering;
 
 import com.fs.starfarer.api.combat.ShipAPI;
+import com.fs.starfarer.loading.specs.M;
 
 /**
- *
+ * Provides common functionality to steering controllers.
+ * 
  * @author Malte Schulze
  */
 public abstract class SteeringController_Base implements SteeringController {
+    protected boolean allowAcceleration, allowTurning, allowStrafe;
+    
+    protected void calculateAllowances(ShipAPI ps) {
+        com.fs.starfarer.combat.systems.F system = (com.fs.starfarer.combat.systems.F)ps.getSystem();
+        if ( system != null && system.isOn() ) {
+            M spec = system.getSpec();
+            allowTurning = spec.isTurningAllowed();
+            allowAcceleration = spec.isAccelerateAllowed() && !spec.isAlwaysAccelerate();
+            allowStrafe = spec.isStrafeAllowed();
+        } else {
+            if ( !allowTurning ) allowTurning = true;
+            if ( !allowAcceleration ) allowAcceleration = true;
+            if ( !allowStrafe ) allowStrafe = true;
+        }
+    }
+    
     protected void turnToAngle(ShipAPI ps, float desiredFacing, float timePassed) {
         float facing = ps.getFacing();
         if ( desiredFacing < 0f ) desiredFacing += 360f;

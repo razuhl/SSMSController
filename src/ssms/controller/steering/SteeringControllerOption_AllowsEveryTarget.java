@@ -23,7 +23,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
+ * Whether a steering controller supports all possible targets or if it only function with specific(or any) target.
+ * 
  * @author Malte Schulze
  */
 @Retention(RetentionPolicy.RUNTIME)

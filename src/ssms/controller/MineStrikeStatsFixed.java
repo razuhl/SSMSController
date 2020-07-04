@@ -28,7 +28,12 @@ import java.lang.reflect.Method;
 import org.lwjgl.util.vector.Vector2f;
 
 /**
- *
+ * When looking up the AI flag {@link com.fs.starfarer.api.combat.ShipwideAIFlags.AIFlags#SYSTEM_TARGET_COORDS SYSTEM_TARGET_COORDS} the original code
+ * only uses it if the associated ship has an AI. The lookup for flags on ships without an AI(meaning player controlled ship) is already handled and 
+ * leaving the check in breaks that functionality.<br>
+ * <br>
+ * This does not work in accordance with how the property is set(it check if AIFlags is null not if AI is null) or how other flags behave, hence it must be fixed.
+ * 
  * @author Malte Schulze
  */
 public class MineStrikeStatsFixed extends MineStrikeStats {
