@@ -78,6 +78,13 @@ public class SteeringController_FreeFlight extends SteeringController_Base {
                 ps.giveCommand(ShipCommand.DECELERATE, null, -1);
             }
         }
+        if ( allowStrafe ) {
+            if ( handler.isStrafeLeft() ) {
+                ps.giveCommand(ShipCommand.STRAFE_LEFT, null, -1);
+            } else if ( handler.isStrafeRight() ) {
+                ps.giveCommand(ShipCommand.STRAFE_RIGHT, null, -1);
+            }
+        }
         if ( allowTurning ) {
             ReadableVector2f vDesiredHeading = handler.getHeading();
             if ( vDesiredHeading.getX() != 0 || vDesiredHeading.getY() != 0 ) {

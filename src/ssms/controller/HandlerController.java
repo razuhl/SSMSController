@@ -33,10 +33,13 @@ public class HandlerController {
     final public Controller controller;
     final public ControllerMapping mapping;
     public float axisBtnConversionDeadzone, joystickDeadzone;
-    protected int axisAccelerating, axisHeadingX, axisHeadingY, axisToggleFightersAndAutofire, axisSwitchWeaponGroup,
-            btnTargetNxt, btnTargetPrevious, btnVenting, btnShieldOrCloak, btnUseSystem, btnFire, btnAlternateSteering, btnSelect, btnShowMenu,
-            btnAccelerate, btnAccelerateBackwards, btnToggleFighters, btnToggleAutofire, btnNextWeaponGroup, btnPrevWeaponGroup;
-    public boolean accelerationInverted, fightersAutofireInverted, weaponGroupsInverted;
+    protected int axisAccelerating, axisHeadingX, axisHeadingY, axisToggleFightersAndAutofire, axisSwitchWeaponGroup, axisStrafing,
+            btnVenting, btnShieldOrCloak, btnUseSystem, btnFire, btnAlternateSteering, btnSelect, btnShowMenu,
+            btnAccelerate, btnAccelerateBackwards, btnToggleFighters, btnToggleAutofire, btnNextWeaponGroup, btnPrevWeaponGroup, 
+            btnShowTargeting, btnClearTarget, btnSelectTarget, btnStrafeRight, btnStrafeLeft,
+            axisCycleMenuEntries, btnNextMenuEntry, btnPrevMenuEntry,
+            axisCycleTargets, btnNextTarget, btnPrevTarget;
+    public boolean accelerationInverted, fightersAutofireInverted, weaponGroupsInverted, strafeInverted, cycleMenuInverted, cycleTargetsInverted;
     protected Vector2f heading = new Vector2f();
 
     public HandlerController() {
@@ -60,56 +63,123 @@ public class HandlerController {
             this.btnShowMenu = getIndexCoercingNull(mapping.btnMenuOpen,controller.getButtonCount());
             this.btnSelect = getIndexCoercingNull(mapping.btnSelectMenuItem,controller.getButtonCount());
             this.btnShieldOrCloak = getIndexCoercingNull(mapping.btnShield,controller.getButtonCount());
-            this.btnTargetNxt = getIndexCoercingNull(mapping.btnTargetNext,controller.getButtonCount());
-            this.btnTargetPrevious = getIndexCoercingNull(mapping.btnTargetPrev,controller.getButtonCount());
             this.btnUseSystem = getIndexCoercingNull(mapping.btnUseSystem,controller.getButtonCount());
             this.btnVenting = getIndexCoercingNull(mapping.btnVenting,controller.getButtonCount());
+            this.btnShowTargeting = getIndexCoercingNull(mapping.btnShowTargeting,controller.getButtonCount());
+            this.btnClearTarget = getIndexCoercingNull(mapping.btnClearTarget,controller.getButtonCount());
+            this.btnSelectTarget = getIndexCoercingNull(mapping.btnSelectTarget,controller.getButtonCount());
 
-            this.axisAccelerating = getIndexCoercingNull(axisIndices.get(mapping.acceleration.axis),controller.getAxisCount());
-            this.accelerationInverted = mapping.acceleration.inverted;
-            this.btnAccelerate = getIndexCoercingNull(mapping.acceleration.btnA,controller.getButtonCount());
-            this.btnAccelerateBackwards = getIndexCoercingNull(mapping.acceleration.btnB,controller.getButtonCount());
-            if ( this.accelerationInverted ) {
-                int t = this.btnAccelerate;
-                this.btnAccelerate = this.btnAccelerateBackwards;
-                this.btnAccelerateBackwards = t;
+            if ( mapping.cycleMenuEntries != null ) {
+                this.axisCycleMenuEntries = getIndexCoercingNull(axisIndices.get(mapping.cycleMenuEntries.axis),controller.getAxisCount());
+                this.cycleMenuInverted = mapping.cycleMenuEntries.inverted;
+                this.btnNextMenuEntry = getIndexCoercingNull(mapping.cycleMenuEntries.btnA,controller.getButtonCount());
+                this.btnPrevMenuEntry = getIndexCoercingNull(mapping.cycleMenuEntries.btnB,controller.getButtonCount());
+                if ( this.cycleMenuInverted ) {
+                    int t = this.btnNextMenuEntry;
+                    this.btnNextMenuEntry = this.btnPrevMenuEntry;
+                    this.btnPrevMenuEntry = t;
+                }
+            } else {
+                this.cycleMenuInverted = false;
+                this.axisCycleMenuEntries = this.btnNextMenuEntry = this.btnPrevMenuEntry = -1;
+            }
+            
+            if ( mapping.cycleTargets != null ) {
+                this.axisCycleTargets = getIndexCoercingNull(axisIndices.get(mapping.cycleTargets.axis),controller.getAxisCount());
+                this.cycleTargetsInverted = mapping.cycleTargets.inverted;
+                this.btnNextTarget = getIndexCoercingNull(mapping.cycleTargets.btnA,controller.getButtonCount());
+                this.btnPrevTarget = getIndexCoercingNull(mapping.cycleTargets.btnB,controller.getButtonCount());
+                if ( this.cycleTargetsInverted ) {
+                    int t = this.btnNextTarget;
+                    this.btnNextTarget = this.btnPrevTarget;
+                    this.btnPrevTarget = t;
+                }
+            } else {
+                this.cycleTargetsInverted = false;
+                this.axisCycleTargets = this.btnNextTarget = this.btnPrevTarget = -1;
+            }
+            
+            if ( mapping.acceleration != null ) {
+                this.axisAccelerating = getIndexCoercingNull(axisIndices.get(mapping.acceleration.axis),controller.getAxisCount());
+                this.accelerationInverted = mapping.acceleration.inverted;
+                this.btnAccelerate = getIndexCoercingNull(mapping.acceleration.btnA,controller.getButtonCount());
+                this.btnAccelerateBackwards = getIndexCoercingNull(mapping.acceleration.btnB,controller.getButtonCount());
+                if ( this.accelerationInverted ) {
+                    int t = this.btnAccelerate;
+                    this.btnAccelerate = this.btnAccelerateBackwards;
+                    this.btnAccelerateBackwards = t;
+                }
+            } else {
+                this.accelerationInverted = false;
+                this.axisAccelerating = this.btnAccelerate = this.btnAccelerateBackwards = -1;
+            }
+            
+            if ( mapping.strafe != null ) {
+                this.axisStrafing = getIndexCoercingNull(axisIndices.get(mapping.strafe.axis),controller.getAxisCount());
+                this.strafeInverted = mapping.strafe.inverted;
+                this.btnStrafeLeft = getIndexCoercingNull(mapping.strafe.btnA,controller.getButtonCount());
+                this.btnStrafeRight = getIndexCoercingNull(mapping.strafe.btnB,controller.getButtonCount());
+                if ( this.strafeInverted ) {
+                    int t = this.btnStrafeLeft;
+                    this.btnStrafeLeft = this.btnStrafeRight;
+                    this.btnStrafeRight = t;
+                }
+            } else {
+                this.strafeInverted = false;
+                this.axisStrafing = this.btnStrafeLeft = this.btnStrafeRight = -1;
             }
 
-            this.axisToggleFightersAndAutofire = getIndexCoercingNull(axisIndices.get(mapping.fightersAutofire.axis),controller.getAxisCount());
-            this.fightersAutofireInverted = mapping.fightersAutofire.inverted;
-            this.btnToggleFighters = getIndexCoercingNull(mapping.fightersAutofire.btnA,controller.getButtonCount());
-            this.btnToggleAutofire = getIndexCoercingNull(mapping.fightersAutofire.btnB,controller.getButtonCount());
-            if ( this.fightersAutofireInverted ) {
-                int t = this.btnToggleFighters;
-                this.btnToggleFighters = this.btnToggleAutofire;
-                this.btnToggleAutofire = t;
+            if ( mapping.fightersAutofire != null ) {
+                this.axisToggleFightersAndAutofire = getIndexCoercingNull(axisIndices.get(mapping.fightersAutofire.axis),controller.getAxisCount());
+                this.fightersAutofireInverted = mapping.fightersAutofire.inverted;
+                this.btnToggleFighters = getIndexCoercingNull(mapping.fightersAutofire.btnA,controller.getButtonCount());
+                this.btnToggleAutofire = getIndexCoercingNull(mapping.fightersAutofire.btnB,controller.getButtonCount());
+                if ( this.fightersAutofireInverted ) {
+                    int t = this.btnToggleFighters;
+                    this.btnToggleFighters = this.btnToggleAutofire;
+                    this.btnToggleAutofire = t;
+                }
+            } else {
+                this.fightersAutofireInverted = false;
+                this.axisToggleFightersAndAutofire = this.btnToggleFighters = this.btnToggleAutofire = -1;
             }
 
-            this.axisSwitchWeaponGroup = getIndexCoercingNull(axisIndices.get(mapping.weaponGroups.axis),controller.getAxisCount());
-            this.weaponGroupsInverted = mapping.weaponGroups.inverted;
-            this.btnNextWeaponGroup = getIndexCoercingNull(mapping.weaponGroups.btnA,controller.getButtonCount());
-            this.btnPrevWeaponGroup = getIndexCoercingNull(mapping.weaponGroups.btnB,controller.getButtonCount());
-            if ( this.weaponGroupsInverted ) {
-                int t = this.btnNextWeaponGroup;
-                this.btnNextWeaponGroup = this.btnPrevWeaponGroup;
-                this.btnPrevWeaponGroup = t;
+            if ( mapping.weaponGroups != null ) {
+                this.axisSwitchWeaponGroup = getIndexCoercingNull(axisIndices.get(mapping.weaponGroups.axis),controller.getAxisCount());
+                this.weaponGroupsInverted = mapping.weaponGroups.inverted;
+                this.btnNextWeaponGroup = getIndexCoercingNull(mapping.weaponGroups.btnA,controller.getButtonCount());
+                this.btnPrevWeaponGroup = getIndexCoercingNull(mapping.weaponGroups.btnB,controller.getButtonCount());
+                if ( this.weaponGroupsInverted ) {
+                    int t = this.btnNextWeaponGroup;
+                    this.btnNextWeaponGroup = this.btnPrevWeaponGroup;
+                    this.btnPrevWeaponGroup = t;
+                }
+            } else {
+                this.weaponGroupsInverted = false;
+                this.axisSwitchWeaponGroup = this.btnNextWeaponGroup = this.btnPrevWeaponGroup = -1;
             }
+            
             this.axisBtnConversionDeadzone = mapping.axisBtnConversionDeadzone;
             this.joystickDeadzone = mapping.joystickDeadzone * mapping.joystickDeadzone;
         } else {
-            this.axisHeadingX = this.axisHeadingY = this.axisAccelerating = this.axisToggleFightersAndAutofire = this.axisSwitchWeaponGroup = -1;
+            this.axisHeadingX = this.axisHeadingY = this.axisAccelerating = this.axisStrafing = this.axisToggleFightersAndAutofire = this.axisSwitchWeaponGroup = -1;
+            this.axisCycleTargets = this.btnNextTarget = this.btnPrevTarget = 
+                    this.axisCycleMenuEntries = this.btnNextMenuEntry = this.btnPrevMenuEntry = 
+                    this.btnAlternateSteering = this.btnFire = this.btnShowMenu = this.btnSelect = this.btnShieldOrCloak = 
+                    this.btnUseSystem = this.btnVenting = this.btnAccelerate = 
+                    this.btnAccelerateBackwards = this.btnToggleFighters = this.btnToggleAutofire = this.btnNextWeaponGroup = this.btnPrevWeaponGroup =
+                    this.btnNextMenuEntry = this.btnShowTargeting = this.btnClearTarget = this.btnStrafeLeft = this.btnStrafeRight = -1;
 
-            this.btnAlternateSteering = this.btnFire = this.btnShowMenu = this.btnSelect = this.btnShieldOrCloak = 
-                    this.btnTargetNxt = this.btnTargetPrevious = this.btnUseSystem = this.btnVenting = this.btnAccelerate = 
-                    this.btnAccelerateBackwards = this.btnToggleFighters = this.btnToggleAutofire = this.btnNextWeaponGroup = this.btnPrevWeaponGroup = -1;
-
-            this.accelerationInverted = this.fightersAutofireInverted = this.weaponGroupsInverted = false;
+            this.cycleTargetsInverted = this.cycleMenuInverted = this.accelerationInverted = this.fightersAutofireInverted = this.weaponGroupsInverted = this.strafeInverted = false;
             this.axisBtnConversionDeadzone = 0.85f;
             this.joystickDeadzone = 0.0625f;
         }
         
         if ( axisAccelerating >= 0 ) {
             controller.setDeadZone(axisAccelerating, axisBtnConversionDeadzone);
+        }
+        if ( axisStrafing >= 0 ) {
+            controller.setDeadZone(axisStrafing, axisBtnConversionDeadzone);
         }
         if ( axisToggleFightersAndAutofire >= 0 ) {
             controller.setDeadZone(axisToggleFightersAndAutofire, axisBtnConversionDeadzone);
@@ -140,7 +210,7 @@ public class HandlerController {
     }
     
     protected boolean isAcceleratingViaAxis() {
-        return axisAccelerating >= 0 ? controller.getAxisValue(axisAccelerating) > axisBtnConversionDeadzone : false;
+        return axisAccelerating >= 0 ? -controller.getAxisValue(axisAccelerating) > axisBtnConversionDeadzone : false;
     }
     
     public boolean isAcceleratingBackwards() {
@@ -148,7 +218,23 @@ public class HandlerController {
     }
     
     protected boolean isAcceleratingBackwardsViaAxis() {
-        return axisAccelerating >= 0 ? -controller.getAxisValue(axisAccelerating) > axisBtnConversionDeadzone : false;
+        return axisAccelerating >= 0 ? controller.getAxisValue(axisAccelerating) > axisBtnConversionDeadzone : false;
+    }
+    
+    public boolean isStrafeLeft() {
+        return ( btnStrafeLeft >= 0 ? controller.isButtonPressed(btnStrafeLeft) : false ) || (strafeInverted ? isStrafeRightViaAxis() : isStrafeLeftViaAxis());
+    }
+    
+    protected boolean isStrafeLeftViaAxis() {
+        return axisStrafing >= 0 ? controller.getAxisValue(axisStrafing) > axisBtnConversionDeadzone : false;
+    }
+    
+    public boolean isStrafeRight() {
+        return ( btnStrafeRight >= 0 ? controller.isButtonPressed(btnStrafeRight) : false ) || (strafeInverted ? isStrafeLeftViaAxis() : isStrafeRightViaAxis());
+    }
+    
+    protected boolean isStrafeRightViaAxis() {
+        return axisStrafing >= 0 ? -controller.getAxisValue(axisStrafing) > axisBtnConversionDeadzone : false;
     }
 
     public ReadableVector2f getHeading() {
@@ -162,14 +248,6 @@ public class HandlerController {
             heading.y = 0;
         }
         return heading;
-    }
-    
-    public boolean isTargetNext() {
-        return btnTargetNxt >= 0 ? controller.isButtonPressed(btnTargetNxt) : false;
-    }
-    
-    public boolean isTargetPrevious() {
-        return btnTargetPrevious >= 0 ? controller.isButtonPressed(btnTargetPrevious) : false;
     }
     
     public boolean isVenting() {
@@ -224,11 +302,55 @@ public class HandlerController {
         return btnAlternateSteering >= 0 ? controller.isButtonPressed(btnAlternateSteering) : false;
     }
 
-    public boolean isSelect() {
-        return btnSelect >= 0 ? controller.isButtonPressed(btnSelect) : false;
-    }
-
     public boolean isShowMenu() {
         return btnShowMenu >= 0 ? controller.isButtonPressed(btnShowMenu) : false;
+    }
+    
+    public boolean isSelectMenuEntry() {
+        return btnSelect >= 0 ? controller.isButtonPressed(btnSelect) : false;
+    }
+    
+    public boolean isShowTargeting() {
+        return btnShowTargeting >= 0 ? controller.isButtonPressed(btnShowTargeting) : false;
+    }
+    
+    public boolean isClearTarget() {
+        return btnClearTarget >= 0 ? controller.isButtonPressed(btnClearTarget) : false;
+    }
+    
+    public boolean isSelectTarget() {
+        return btnSelectTarget >= 0 ? controller.isButtonPressed(btnSelectTarget) : false;
+    }
+    
+    public boolean isNextTarget() {
+        return ( btnNextTarget >= 0 ? controller.isButtonPressed(btnNextTarget) : false ) || (cycleTargetsInverted ? isPrevTargetViaAxis() : isNextTargetViaAxis());
+    }
+    
+    protected boolean isNextTargetViaAxis() {
+        return axisCycleTargets >= 0 ? -controller.getAxisValue(axisCycleTargets) > axisBtnConversionDeadzone : false;
+    }
+    
+    public boolean isPrevTarget() {
+        return ( btnPrevTarget >= 0 ? controller.isButtonPressed(btnPrevTarget) : false ) || (cycleTargetsInverted ? isNextTargetViaAxis() : isPrevTargetViaAxis());
+    }
+    
+    protected boolean isPrevTargetViaAxis() {
+        return axisCycleTargets >= 0 ? controller.getAxisValue(axisCycleTargets) > axisBtnConversionDeadzone : false;
+    }
+    
+    public boolean isNextMenuEntry() {
+        return ( btnNextMenuEntry >= 0 ? controller.isButtonPressed(btnNextMenuEntry) : false ) || (cycleMenuInverted ? isPrevMenuEntryViaAxis() : isNextMenuEntryViaAxis());
+    }
+    
+    protected boolean isNextMenuEntryViaAxis() {
+        return axisCycleMenuEntries >= 0 ? -controller.getAxisValue(axisCycleMenuEntries) > axisBtnConversionDeadzone : false;
+    }
+    
+    public boolean isPrevMenuEntry() {
+        return ( btnPrevMenuEntry >= 0 ? controller.isButtonPressed(btnPrevMenuEntry) : false ) || (cycleMenuInverted ? isNextMenuEntryViaAxis() : isPrevMenuEntryViaAxis());
+    }
+    
+    protected boolean isPrevMenuEntryViaAxis() {
+        return axisCycleMenuEntries >= 0 ? controller.getAxisValue(axisCycleMenuEntries) > axisBtnConversionDeadzone : false;
     }
 }

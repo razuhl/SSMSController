@@ -27,10 +27,14 @@ import java.util.Map;
  */
 public class ControllerMapping {
     public String deviceName, axisSteeringX, axisSteeringY;
-    public Integer btnTargetNext, btnTargetPrev, btnVenting, btnShield, btnUseSystem, btnFire, btnMenuOpen, btnSelectMenuItem, btnAltSteering;
+    public Integer btnVenting, btnShield, btnUseSystem, btnFire, btnMenuOpen, btnSelectMenuItem, btnAltSteering,
+            btnShowTargeting, btnClearTarget, btnSelectTarget;
     public AxisOrButton acceleration = new AxisOrButton(null, false, null, null), 
             weaponGroups = new AxisOrButton(null, false, null, null), 
-            fightersAutofire = new AxisOrButton(null, false, null, null);
+            fightersAutofire = new AxisOrButton(null, false, null, null), 
+            strafe = new AxisOrButton(null, false, null, null),
+            cycleMenuEntries = new AxisOrButton(null, false, null, null),
+            cycleTargets = new AxisOrButton(null, false, null, null);
     public float axisBtnConversionDeadzone = 0.85f, joystickDeadzone = 0.25f;
     public Map<String,Object> customProperties = new HashMap<>();
     

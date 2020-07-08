@@ -78,9 +78,10 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
     protected Targeting targeting;
     protected PlayerShipCache psCache = new PlayerShipCache();
     protected boolean btnVentingDown = false, btnShieldDown = false, btnUseSystemDown = false, btnFighterToggleDown = false, btnToggleAutofireDown = false,
-            isAlternateSteering = false, btnAlternateSteeringDown = false, btnSelectMenuEntryDown = false, btnDisplayMenuDown = false,
-            btnTargetingBothDown = false, btnNextWeaponGroupDown = false, btnPrevWeaponGroupDown = false;
-    protected boolean displayMenu = false, nextMenuEntry = false, selectMenuEntry = false, enableControllerSteering = true, wasShowingWarroom = false, wasShieldOn = false,
+            isAlternateSteering = false, btnAlternateSteeringDown = false, btnSelectMenuEntryDown = false, btnDisplayMenuDown = false, btnNextMenuEntryDown = false,
+            btnTargetingBothDown = false, btnNextWeaponGroupDown = false, btnPrevWeaponGroupDown = false, btnPrevMenuEntryDown = false,
+            btnClearTargetDown = false, btnShowTargetingDown = false, btnTargetNextDown = false, btnTargetPrevious = false, btnSelectTargetDown = false;
+    protected boolean displayMenu = false, nextMenuEntry = false, prevMenuEntry = false, selectMenuEntry = false, enableControllerSteering = true, wasShowingWarroom = false, wasShieldOn = false,
             skipFrame = false;
     protected int selectedBtnIndex = -1;
     protected UIComponent_Parent root;
@@ -210,12 +211,20 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
         isAlternateSteering = false;
         btnAlternateSteeringDown = false;
         btnSelectMenuEntryDown = false;
+        btnNextMenuEntryDown = false;
+        btnPrevMenuEntryDown = false;
         btnDisplayMenuDown = false;
         btnNextWeaponGroupDown = false; 
         btnPrevWeaponGroupDown = false;
         displayMenu = false;
         nextMenuEntry = false;
+        prevMenuEntry = false;
         selectMenuEntry = false;
+        btnClearTargetDown = false;
+        btnSelectTargetDown = false;
+        btnShowTargetingDown = false; 
+        btnTargetNextDown = false; 
+        btnTargetPrevious = false;
         selectedBtnIndex = -1;
         if ( psCache != null ) psCache.discard();
         else psCache = new PlayerShipCache();
@@ -238,8 +247,12 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
         return displayMenu;
     }
     
+    protected boolean processTargetingInputs() {
+        return targeting != null && !displayMenu && enableControllerSteering;
+    }
+    
     protected boolean processShipInputs(ShipAPI ps) {
-        return ps != null && !displayMenu && enableControllerSteering && engine.isEntityInPlay(ps) && !ps.isHulk() && !ps.controlsLocked();
+        return !displayMenu && targeting == null && enableControllerSteering && engine.isEntityInPlay(ps) && !ps.isHulk() && !ps.controlsLocked();
     }
     
     protected boolean isControllerConfigured(HandlerController handler) {
@@ -307,11 +320,12 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
             }
             handler.poll();
             
-            if ( targeting != null && targeting.isExpired() ) {
+            //manually select target instead of letting it expire
+            /*if ( targeting != null && targeting.isExpired() ) {
                 targeting.discard();
                 targeting = null;
                 timeDilation(false,TDID_TARGETING);
-            }
+            }*/
             
             float totalElapsedTime = engine.getTotalElapsedTime(true);
             boolean log = totalElapsedTime > nextLog;
@@ -321,15 +335,25 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
             //TODO menu entry for ending combat/simulation
             
             if ( processMenuInputs() ) {
-                if ( handler.isShowMenu() ) {
-                    if ( !btnDisplayMenuDown ) {
+                if ( handler.isNextMenuEntry() ) {
+                    if ( !btnNextMenuEntryDown ) {
                         nextMenuEntry = true;
-                        btnDisplayMenuDown = true;
+                        prevMenuEntry = false;
+                        btnNextMenuEntryDown = true;
                     }
-                } else if ( btnDisplayMenuDown ) {
-                    btnDisplayMenuDown = false;
+                } else if ( btnNextMenuEntryDown ) {
+                    btnNextMenuEntryDown = false;
                 }
-                if ( handler.isSelect() ) {
+                if ( handler.isPrevMenuEntry() ) {
+                    if ( !btnPrevMenuEntryDown ) {
+                        prevMenuEntry = true;
+                        nextMenuEntry = false;
+                        btnPrevMenuEntryDown = true;
+                    }
+                } else if ( btnPrevMenuEntryDown ) {
+                    btnPrevMenuEntryDown = false;
+                }
+                if ( handler.isSelectMenuEntry() ) {
                     if ( !btnSelectMenuEntryDown ) {
                         selectMenuEntry = true;
                         btnSelectMenuEntryDown = true;
@@ -349,14 +373,83 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
             }
             
             ShipAPI ps = getControlledShip();
-            if ( processShipInputs(ps) ) {
-                if ( ps != null && engine.isEntityInPlay(ps) ) {
-                    if ( !psCache.isForShip(ps) ) {
-                        psCache.setShip(ps, handler, engine);
+            if ( ps != null && engine.isEntityInPlay(ps) ) {
+                if ( !psCache.isForShip(ps) ) {
+                    psCache.setShip(ps, handler, engine);
+                }
+                
+                //Targeting dilates time if first shown and unpauses if no further targeting buttons where used after x seconds
+                //When starting targeting with an already selected target we keep that target until a second input occurs to avoid
+                //  loosing targets by bumping bumpers by blunder
+                if ( processTargetingInputs() ) {
+                    if ( handler.isClearTarget() ) {
+                        if ( !btnClearTargetDown ) {
+                            btnClearTargetDown = true;
+                        }
+                    } else if ( btnClearTargetDown ) {
+                        if ( targeting != null ) targeting.discard();
+                        targeting = null;
+                        timeDilation(false,TDID_TARGETING);
+                        CombatState cs = (CombatState) AppDriver.getInstance().getState(CombatState.STATE_ID);
+                        cs.setVideoFeedSource(null);
+                        ps.setShipTarget(null);
+                        btnClearTargetDown = false;
                     }
-                    
+                    if ( handler.isSelectTarget() ) {
+                        if ( !btnSelectTargetDown ) {
+                            btnSelectTargetDown = true;
+                        }
+                    } else if ( btnSelectTargetDown ) {
+                        if ( targeting != null ) targeting.discard();
+                        targeting = null;
+                        timeDilation(false,TDID_TARGETING);
+                        CombatState cs = (CombatState) AppDriver.getInstance().getState(CombatState.STATE_ID);
+                        cs.setVideoFeedSource(null);
+                        btnSelectTargetDown = false;
+                    }
+                    if ( handler.isNextTarget() ) {
+                        if ( !btnTargetNextDown ) {
+                            if ( targeting.hasTargets() ) {
+                                ps.setShipTarget((Ship) targeting.next());
+                                psCache.steeringController.onTargetSelected();
+                            }
+                            btnTargetNextDown = true;
+                        }
+                    } else if ( btnTargetNextDown ) {
+                        btnTargetNextDown = false;
+                    }
+                    if ( handler.isPrevTarget() ) {
+                        if ( !btnTargetPrevious ) {
+                            if ( targeting.hasTargets() ) {
+                                ps.setShipTarget((Ship) targeting.previous());
+                                psCache.steeringController.onTargetSelected();
+                            }
+                            btnTargetPrevious = true;
+                        }
+                    } else if ( btnTargetPrevious ) {
+                        btnTargetPrevious = false;
+                    }
+                }
+                
+                if ( processShipInputs(ps) ) {
                     //autopilot flag is inverted!
                     if ( engine.isUIAutopilotOn() && !engine.isPaused() && amount > 0f ) {
+                        if ( handler.isShowTargeting() ) {
+                            if ( !btnShowTargetingDown ) {
+                                btnShowTargetingDown = true;
+                            }
+                        } else if ( btnShowTargetingDown ) {
+                            if ( targeting == null ) {
+                                targeting = new Targeting(targetsByDistance(engine.getShips(), ps.getLocation(), ps.getOwner() == 100 ? engine.getFogOfWar(0) : engine.getFogOfWar(ps.getOwner())));
+                            }
+                            if ( targeting.hasTargets() ) {
+                                ps.setShipTarget((Ship) targeting.next());
+                                psCache.steeringController.onTargetSelected();
+                            }
+                            timeDilation(true,TDID_TARGETING);
+                            btnShowTargetingDown = false;
+                        }
+                        
                         if ( handler.isAlternateSteering() ) {
                             if ( !btnAlternateSteeringDown ) {
                                 isAlternateSteering = !isAlternateSteering;
@@ -377,47 +470,6 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
                         }
                         
                         psCache.steeringController.steer(amount, offsetFacingAngle);
-                        
-                        //Targeting dilates time if first clicked and unpauses if no further targeting buttons where used after x seconds
-                        //When starting targeting with an already selected target we keep that target until a second input occurs to avoid
-                        //  loosing targets by bumping bumpers by blunder
-                        if ( handler.isTargetNext() && handler.isTargetPrevious() ) {
-                            //remove targeting
-                            if ( !btnTargetingBothDown ) {
-                                if ( targeting != null ) targeting.discard();
-                                targeting = null;
-                                timeDilation(false,TDID_TARGETING);
-                                CombatState cs = (CombatState) AppDriver.getInstance().getState(CombatState.STATE_ID);
-                                cs.setVideoFeedSource(null);
-                                ps.setShipTarget(null);
-                                btnTargetingBothDown = true;
-                            }
-                        } else if ( handler.isTargetNext() ) {
-                            if ( !btnTargetingBothDown ) {
-                                if ( targeting == null ) {
-                                    targeting = new Targeting(targetsByDistance(engine.getShips(), ps.getLocation(), ps.getOwner() == 100 ? engine.getFogOfWar(0) : engine.getFogOfWar(ps.getOwner())));
-                                }
-                                if ( targeting.hasTargets() && targeting.isNotOnCooldown() ) {
-                                    ps.setShipTarget((Ship) targeting.next());
-                                    psCache.steeringController.onTargetSelected();
-                                    timeDilation(true,TDID_TARGETING);
-                                }
-                            }
-                        } else if ( handler.isTargetPrevious() ) {
-                            if ( !btnTargetingBothDown ) {
-                                if ( targeting == null ) {
-                                    targeting = new Targeting(targetsByDistance(engine.getShips(), ps.getLocation(), ps.getOwner() == 100 ? engine.getFogOfWar(0) : engine.getFogOfWar(ps.getOwner())));
-                                }
-                                if ( targeting.hasTargets() && targeting.isNotOnCooldown() ) {
-                                    ps.setShipTarget((Ship) targeting.previous());
-                                    psCache.steeringController.onTargetSelected();
-                                    timeDilation(true,TDID_TARGETING);
-                                }
-                            }
-                        } else {
-                            if ( targeting != null ) targeting.setCooldown(false);
-                            btnTargetingBothDown = false;
-                        }
                         
                         Vector2f targetLocation;
                         if ( ps.getSelectedGroupAPI() != null ) {
@@ -559,23 +611,23 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
                             btnPrevWeaponGroupDown = false;
                         }
                     }
-                    
-                    if ( targeting == null || ps.getShipTarget() == null ) {
-                        //center on player ship
-                        CombatState cs = (CombatState) AppDriver.getInstance().getState(CombatState.STATE_ID);
-                        cs.setVideoFeedSource(null);
-                        cs.getViewMouseOffset().\u00D200000(0, 0);
-                    } else {
-                        //center on target
-                        CombatState cs = (CombatState) AppDriver.getInstance().getState(CombatState.STATE_ID);
-                        cs.setVideoFeedSource((com.fs.starfarer.combat.OoOO.oOOO.o) ps.getShipTarget());
-                    }
                 }
-            }
-        }
+                
+                if ( targeting == null || ps.getShipTarget() == null ) {
+                    //center on player ship
+                    CombatState cs = (CombatState) AppDriver.getInstance().getState(CombatState.STATE_ID);
+                    cs.setVideoFeedSource(null);
+                    cs.getViewMouseOffset().\u00D200000(0, 0);
+                } else {
+                    //center on target
+                    CombatState cs = (CombatState) AppDriver.getInstance().getState(CombatState.STATE_ID);
+                    cs.setVideoFeedSource((com.fs.starfarer.combat.OoOO.oOOO.o) ps.getShipTarget());
+                }
+                
+                wasShieldOn = ps.getShield() != null && ps.getShield().isOn();
+            } else wasShieldOn = false;
+        } else wasShieldOn = false;
         
-        ShipAPI ps = psCache.ps;
-        wasShieldOn = ps != null && ps.getShield() != null && ps.getShield().isOn();
         wasShowingWarroom = engine.getCombatUI().isShowingCommandUI();
     }
 
@@ -651,13 +703,16 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
             root.resize(new Rectangle((int)xMin, (int)yMin, (int)xMax, (int)yMax));
         }
         
-        if ( selectedBtnIndex == -1 && !nextMenuEntry ) {
+        if ( selectedBtnIndex == -1 && (!nextMenuEntry && !prevMenuEntry) ) {
             selectedBtnIndex = selectNextButton(root, -1);
         }
         
         if ( nextMenuEntry ) {
             selectedBtnIndex = selectNextButton(root, selectedBtnIndex);
             nextMenuEntry = false;
+        } else if ( prevMenuEntry ) {
+            selectedBtnIndex = selectPrevButton(root, selectedBtnIndex);
+            prevMenuEntry = false;
         } else if ( selectMenuEntry ) {
             selectMenuEntry = false;
             List<UIComponent_Button> btns = UIUtil.getInstance().findComponents(root, UIComponent_Button.class);
@@ -672,6 +727,43 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
         root.getContext().pushStyle(UIContext.StyleProperty.alphaFactor, viewport.getAlphaMult());
         root.render();
         root.getContext().popStyle(UIContext.StyleProperty.alphaFactor);
+    }
+    
+    protected int selectPrevButton(UIComponent_Parent root, int currentlySelectedBtnIndex) {
+        if ( root == null ) return -1;
+        List<UIComponent_Column> clmns = UIUtil.getInstance().findComponents(root, UIComponent_Column.class);
+        UIComponent_Column activeColumn = clmns.get(clmns.size()-1);
+        List<UIComponent_Button> btns = UIUtil.getInstance().findComponents(root, UIComponent_Button.class);
+        
+        int btnsSkipped = 0;
+        Iterator<UIComponent_Button> it = btns.iterator();
+        while ( it.hasNext() ) {
+            UIComponent_Button btn = it.next();
+            deselectButton(btn);
+            
+            UIComponent_Parent p = btn.parentComponent();
+            while ( p != null && p != activeColumn ) {
+                p = p.parentComponent();
+            }
+            if ( p == null ) {
+                btnsSkipped++;
+                it.remove();
+            }
+        }
+        currentlySelectedBtnIndex -= btnsSkipped;
+        if ( currentlySelectedBtnIndex < -1 ) currentlySelectedBtnIndex = -1;
+        if ( btns.isEmpty() ) {
+            return -1;
+        } else if ( --currentlySelectedBtnIndex < 0 ) {
+            selectButton(btns.get(btns.size()-1));
+            return btns.size() - 1 + btnsSkipped;
+        } else if ( currentlySelectedBtnIndex < btns.size() ) {
+            selectButton(btns.get(currentlySelectedBtnIndex));
+            return currentlySelectedBtnIndex + btnsSkipped;
+        } else {
+            selectButton(btns.get(0));
+            return btnsSkipped;
+        }
     }
     
     protected int selectNextButton(UIComponent_Parent root, int currentlySelectedBtnIndex) {

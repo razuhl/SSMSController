@@ -207,28 +207,40 @@ public final class SSMSControllerModPlugin extends BaseModPlugin {
                     sourceObject.btnAltSteering = value;
                 }
             }, true, 0, 100));
-        confControllerMapping.addProperty(new PropertyConfigurationInteger<>("btnTargetNext","[B] Target-Next","Zero based index for button that traverses forward through the list of available targets sorted by distance.",null,10,
+        confControllerMapping.addProperty(new PropertyConfigurationInteger<>("btnShowTargeting","[B] Show Targeting","Zero based index for button that starts the targeting mode.",null,9,
             new PropertyValueGetter<ControllerMapping, Integer>() {
                 @Override
                 public Integer get(ControllerMapping sourceObject) {
-                    return sourceObject.btnTargetNext;
+                    return sourceObject.btnShowTargeting;
                 }
             }, new PropertyValueSetter<ControllerMapping, Integer>() {
                 @Override
                 public void set(ControllerMapping sourceObject, Integer value) {
-                    sourceObject.btnTargetNext = value;
+                    sourceObject.btnShowTargeting = value;
                 }
             }, true, 0, 100));
-        confControllerMapping.addProperty(new PropertyConfigurationInteger<>("btnTargetPrev","[B] Target-Prev","Zero based index for button that traverses backwards through the list of available targets sorted by distance.",null,20,
+        confControllerMapping.addProperty(new PropertyConfigurationInteger<>("btnSelectTarget","[B] Select Target","Zero based index for button that stops the targeting mode selecting the current target.",null,10,
             new PropertyValueGetter<ControllerMapping, Integer>() {
                 @Override
                 public Integer get(ControllerMapping sourceObject) {
-                    return sourceObject.btnTargetPrev;
+                    return sourceObject.btnSelectTarget;
                 }
             }, new PropertyValueSetter<ControllerMapping, Integer>() {
                 @Override
                 public void set(ControllerMapping sourceObject, Integer value) {
-                    sourceObject.btnTargetPrev = value;
+                    sourceObject.btnSelectTarget = value;
+                }
+            }, true, 0, 100));
+        confControllerMapping.addProperty(new PropertyConfigurationInteger<>("btnClearTarget","[B] Clear Target","Zero based index for button that stops the targeting mode and clears any target.",null,21,
+            new PropertyValueGetter<ControllerMapping, Integer>() {
+                @Override
+                public Integer get(ControllerMapping sourceObject) {
+                    return sourceObject.btnClearTarget;
+                }
+            }, new PropertyValueSetter<ControllerMapping, Integer>() {
+                @Override
+                public void set(ControllerMapping sourceObject, Integer value) {
+                    sourceObject.btnClearTarget = value;
                 }
             }, true, 0, 100));
         confControllerMapping.addProperty(new PropertyConfigurationInteger<>("btnVenting","[B] Vent","Zero based index for button that starts venting.",null,30,
@@ -279,7 +291,7 @@ public final class SSMSControllerModPlugin extends BaseModPlugin {
                     sourceObject.btnShield = value;
                 }
             }, true, 0, 100));
-        confControllerMapping.addProperty(new PropertyConfigurationInteger<>("btnMenuOpen","[B] Open Menu","Zero based index for button that opens the menu and cycles through the available items.",null,70,
+        confControllerMapping.addProperty(new PropertyConfigurationInteger<>("btnMenuOpen","[B] Open Menu","Zero based index for button that opens the menu.",null,70,
             new PropertyValueGetter<ControllerMapping, Integer>() {
                 @Override
                 public Integer get(ControllerMapping sourceObject) {
@@ -291,7 +303,7 @@ public final class SSMSControllerModPlugin extends BaseModPlugin {
                     sourceObject.btnMenuOpen = value;
                 }
             }, true, 0, 100));
-        confControllerMapping.addProperty(new PropertyConfigurationInteger<>("btnSelectMenuItem","[B] Select Menu-Item","Zero based index for button that selects the currently active menu item.",null,80,
+        confControllerMapping.addProperty(new PropertyConfigurationInteger<>("btnSelectMenuItem","[B] Select Menu-Item","Zero based index for button that selects the currently active menu item when the menu is open.",null,80,
             new PropertyValueGetter<ControllerMapping, Integer>() {
                 @Override
                 public Integer get(ControllerMapping sourceObject) {
@@ -303,7 +315,7 @@ public final class SSMSControllerModPlugin extends BaseModPlugin {
                     sourceObject.btnSelectMenuItem = value;
                 }
             }, true, 0, 100));
-        confControllerMapping.addProperty(new PropertyConfigurationContainer<>("acceleration","Acceleration","Configuration for acceleration mode.",null,"SSMSAxisOrButton",ControllerMapping.AxisOrButton.class,200,
+        confControllerMapping.addProperty(new PropertyConfigurationContainer<>("acceleration","Acceleration","Configuration for acceleration mode.",new ControllerMapping.AxisOrButton(null,false,null,null),"SSMSAxisOrButton",ControllerMapping.AxisOrButton.class,200,
             new PropertyValueGetter<ControllerMapping, ControllerMapping.AxisOrButton>() {
                 @Override
                 public ControllerMapping.AxisOrButton get(ControllerMapping sourceObject) {
@@ -322,7 +334,26 @@ public final class SSMSControllerModPlugin extends BaseModPlugin {
                     }
                 }
             }, true));
-        confControllerMapping.addProperty(new PropertyConfigurationContainer<>("weaponGroups","Cycle Weapon Groups","Configuration for cycling through weapon groups.",null,"SSMSAxisOrButton",ControllerMapping.AxisOrButton.class,210,
+        confControllerMapping.addProperty(new PropertyConfigurationContainer<>("strafing","Strafing","Configuration for strafing left/right.",new ControllerMapping.AxisOrButton(null,false,null,null),"SSMSAxisOrButton",ControllerMapping.AxisOrButton.class,205,
+            new PropertyValueGetter<ControllerMapping, ControllerMapping.AxisOrButton>() {
+                @Override
+                public ControllerMapping.AxisOrButton get(ControllerMapping sourceObject) {
+                    return sourceObject.strafe;
+                }
+            }, new PropertyValueSetter<ControllerMapping, PropertiesContainer>() {
+                @Override
+                public void set(ControllerMapping sourceObject, PropertiesContainer value) {
+                    if ( value == null ) sourceObject.strafe = null;
+                    else {
+                        sourceObject.strafe = new ControllerMapping.AxisOrButton(
+                                (String)value.getFieldValue("axis", String.class),
+                                (Boolean)value.getFieldValue("inverted", Boolean.class),
+                                (Integer)value.getFieldValue("btnA", Integer.class),
+                                (Integer)value.getFieldValue("btnB", Integer.class));
+                    }
+                }
+            }, true));
+        confControllerMapping.addProperty(new PropertyConfigurationContainer<>("weaponGroups","Cycle Weapon Groups","Configuration for cycling through weapon groups.",new ControllerMapping.AxisOrButton(null,false,null,null),"SSMSAxisOrButton",ControllerMapping.AxisOrButton.class,210,
             new PropertyValueGetter<ControllerMapping, ControllerMapping.AxisOrButton>() {
                 @Override
                 public ControllerMapping.AxisOrButton get(ControllerMapping sourceObject) {
@@ -341,7 +372,7 @@ public final class SSMSControllerModPlugin extends BaseModPlugin {
                     }
                 }
             }, true));
-        confControllerMapping.addProperty(new PropertyConfigurationContainer<>("fightersAutofire","Fighters/Autofire","Configuration for toggling fighter modes and toggling autofire for the current weapon group.",null,"SSMSAxisOrButton",ControllerMapping.AxisOrButton.class,220,
+        confControllerMapping.addProperty(new PropertyConfigurationContainer<>("fightersAutofire","Fighters/Autofire","Configuration for toggling fighter modes and toggling autofire for the current weapon group.",new ControllerMapping.AxisOrButton(null,false,null,null),"SSMSAxisOrButton",ControllerMapping.AxisOrButton.class,220,
             new PropertyValueGetter<ControllerMapping, ControllerMapping.AxisOrButton>() {
                 @Override
                 public ControllerMapping.AxisOrButton get(ControllerMapping sourceObject) {
@@ -353,6 +384,44 @@ public final class SSMSControllerModPlugin extends BaseModPlugin {
                     if ( value == null ) sourceObject.fightersAutofire = null;
                     else {
                         sourceObject.fightersAutofire = new ControllerMapping.AxisOrButton(
+                                (String)value.getFieldValue("axis", String.class),
+                                (Boolean)value.getFieldValue("inverted", Boolean.class),
+                                (Integer)value.getFieldValue("btnA", Integer.class),
+                                (Integer)value.getFieldValue("btnB", Integer.class));
+                    }
+                }
+            }, true));
+        confControllerMapping.addProperty(new PropertyConfigurationContainer<>("cycleTargets","Cycle Targets","Configuration for cycling targets in targeting mode.",new ControllerMapping.AxisOrButton(null,false,null,null),"SSMSAxisOrButton",ControllerMapping.AxisOrButton.class,230,
+            new PropertyValueGetter<ControllerMapping, ControllerMapping.AxisOrButton>() {
+                @Override
+                public ControllerMapping.AxisOrButton get(ControllerMapping sourceObject) {
+                    return sourceObject.cycleTargets;
+                }
+            }, new PropertyValueSetter<ControllerMapping, PropertiesContainer>() {
+                @Override
+                public void set(ControllerMapping sourceObject, PropertiesContainer value) {
+                    if ( value == null ) sourceObject.cycleTargets = null;
+                    else {
+                        sourceObject.cycleTargets = new ControllerMapping.AxisOrButton(
+                                (String)value.getFieldValue("axis", String.class),
+                                (Boolean)value.getFieldValue("inverted", Boolean.class),
+                                (Integer)value.getFieldValue("btnA", Integer.class),
+                                (Integer)value.getFieldValue("btnB", Integer.class));
+                    }
+                }
+            }, true));
+        confControllerMapping.addProperty(new PropertyConfigurationContainer<>("cycleMenuEntries","Cycle Menu Entries","Configuration for cycling menu entries when the menu is displayed.",new ControllerMapping.AxisOrButton(null,false,null,null),"SSMSAxisOrButton",ControllerMapping.AxisOrButton.class,240,
+            new PropertyValueGetter<ControllerMapping, ControllerMapping.AxisOrButton>() {
+                @Override
+                public ControllerMapping.AxisOrButton get(ControllerMapping sourceObject) {
+                    return sourceObject.cycleMenuEntries;
+                }
+            }, new PropertyValueSetter<ControllerMapping, PropertiesContainer>() {
+                @Override
+                public void set(ControllerMapping sourceObject, PropertiesContainer value) {
+                    if ( value == null ) sourceObject.cycleMenuEntries = null;
+                    else {
+                        sourceObject.cycleMenuEntries = new ControllerMapping.AxisOrButton(
                                 (String)value.getFieldValue("axis", String.class),
                                 (Boolean)value.getFieldValue("inverted", Boolean.class),
                                 (Integer)value.getFieldValue("btnA", Integer.class),
