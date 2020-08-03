@@ -22,26 +22,35 @@ import com.fs.starfarer.api.combat.MutableShipStatsAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.api.combat.ViewportAPI;
 import com.fs.starfarer.api.loading.DamagingExplosionSpec;
+import com.fs.starfarer.api.util.Pair;
 import com.fs.starfarer.combat.CombatState;
-import com.fs.starfarer.loading.specs.M;
 import com.fs.starfarer.prototype.Utils;
 import com.fs.state.AppDriver;
+import java.util.ArrayList;
+import java.util.List;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.ReadableVector2f;
 import org.lwjgl.util.vector.Vector2f;
 import ssms.controller.HandlerController;
+import ssms.controller.inputScreens.Indicators;
 
 /**
  *
  * @author Malte Schulze
  */
-@SteeringControllerOption_Label("[SSMS] Orbit")
+@SteeringControllerOption_Label("[SSMS] Orbital")
 @SteeringControllerOption_AllowsEveryTarget(false)
 public class SteeringController_OrbitTarget extends SteeringController_Base {
     protected ShipAPI ps;
     protected HandlerController handler;
     protected float desiredDistance;
     protected ReadableVector2f vDesiredHeadingLastValidInput;
+    protected List<Pair<Indicators, String>> indicators;
+
+    @Override
+    public List<Pair<Indicators, String>> getIndicators() {
+        return indicators;
+    }
 
     @Override
     public boolean activate(ShipAPI playerShip, HandlerController controller, CombatEngineAPI engine) {
@@ -50,6 +59,15 @@ public class SteeringController_OrbitTarget extends SteeringController_Base {
         this.handler = controller;
         desiredDistance = calculateDesiredDistanceForOrbitingTarget(ps);
         vDesiredHeadingLastValidInput = Vector2f.sub(ps.getLocation(), ps.getShipTarget().getLocation(), new Vector2f());
+        
+        if ( indicators == null ) {
+            indicators = new ArrayList<>();
+            indicators.add(new Pair(null, "Orbital Steering"));
+            indicators.add(new Pair(Indicators.LeftStick, "Relative Pos"));
+            indicators.add(new Pair(Indicators.LeftTrigger, "Further"));
+            indicators.add(new Pair(Indicators.RightTrigger, "Closer"));
+        }
+        
         return true;
     }
 
@@ -74,14 +92,14 @@ public class SteeringController_OrbitTarget extends SteeringController_Base {
     public void steer(float timeAdvanced, float offsetFacingAngle) {
         calculateAllowances(ps);
         
-        if ( handler.isAccelerating() ) {
+        if ( handler.isTriggerRight() ) {
             desiredDistance -= Math.max(ps.getEngineController().getMaxSpeedWithoutBoost(), 400f) * timeAdvanced;
             desiredDistance = Math.max(ps.getCollisionRadius() + ps.getShipTarget().getCollisionRadius(), desiredDistance);
-        } else if ( handler.isAcceleratingBackwards() ) {
+        } else if ( handler.isTriggerLeft() ) {
             desiredDistance += Math.max(ps.getEngineController().getMaxSpeedWithoutBoost(), 400f) * timeAdvanced;
         }
 
-        ReadableVector2f vDesiredHeading = handler.getHeading();
+        ReadableVector2f vDesiredHeading = handler.getLeftStick();
         if ( vDesiredHeading.getX() == 0 || vDesiredHeading.getY() == 0 ) {
             vDesiredHeading = vDesiredHeadingLastValidInput;
         }
@@ -101,7 +119,7 @@ public class SteeringController_OrbitTarget extends SteeringController_Base {
     public void renderInWorldCoords(ViewportAPI viewport, float offsetFacingAngle) {
         if ( !isTargetValid() ) return;
         
-        ReadableVector2f heading = handler.getHeading();
+        ReadableVector2f heading = handler.getLeftStick();
         if ( heading.getX() == 0 && heading.getY() == 0 ) {
             heading = Utils.Object(ps.getFacing());
         }

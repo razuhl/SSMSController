@@ -17,8 +17,10 @@
  */
 package ssms.controller;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
+import ssms.controller.inputScreens.Indicators;
 
 /**
  * Stores information on how to interpret game controller signals.
@@ -26,32 +28,11 @@ import java.util.Map;
  * @author Malte Schulze
  */
 public class ControllerMapping {
-    public String deviceName, axisSteeringX, axisSteeringY;
-    public Integer btnVenting, btnShield, btnUseSystem, btnFire, btnMenuOpen, btnSelectMenuItem, btnAltSteering,
-            btnShowTargeting, btnClearTarget, btnSelectTarget;
-    public AxisOrButton acceleration = new AxisOrButton(null, false, null, null), 
-            weaponGroups = new AxisOrButton(null, false, null, null), 
-            fightersAutofire = new AxisOrButton(null, false, null, null), 
-            strafe = new AxisOrButton(null, false, null, null),
-            cycleMenuEntries = new AxisOrButton(null, false, null, null),
-            cycleTargets = new AxisOrButton(null, false, null, null);
+    public String deviceName;
     public float axisBtnConversionDeadzone = 0.85f, joystickDeadzone = 0.25f;
     public Map<String,Object> customProperties = new HashMap<>();
+    public EnumMap<Indicators,String> indicators;
     
-    /**
-     * Container that holds information for two exclusive or functionalities. They can be mapped to an axis or two buttons. 
-     * This increases the flexibility for different controller layouts.
-     */
-    static public class AxisOrButton {
-        public String axis;
-        public boolean inverted;
-        public Integer btnA, btnB;
-
-        public AxisOrButton(String axis, boolean inverted, Integer btnA, Integer btnB) {
-            this.axis = axis;
-            this.inverted = inverted;
-            this.btnA = btnA;
-            this.btnB = btnB;
-        }
-    }
+    public String axisLeftStickX, axisLeftStickY, axisRightStickX, axisRightStickY, axisTrigger;
+    public Integer btnA, btnB, btnX, btnY, btnBumperLeft, btnBumperRight, btnStart, btnSelect, btnLeftStick, btnRightStick;
 }

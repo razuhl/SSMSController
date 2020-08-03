@@ -24,13 +24,14 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import org.lwjgl.util.vector.Vector2f;
 import ssms.controller.EveryFrameCombatPlugin_Controller;
+import ssms.controller.inputScreens.InputScreen_BattleSteering;
 
 /**
  *
  * @author Malte Schulze
  */
 public class TargetLeadingTest {
-    private static class EveryFrameCombatPlugin_ControllerMock extends EveryFrameCombatPlugin_Controller {
+    private static class InputScreen_BattleSteeringMock extends InputScreen_BattleSteering {
         @Override
         public Vector2f targetLeading(Vector2f vShooterPos, Vector2f vTargetPos, Vector2f vTargetVelocity, float projectileSpeed, Vector2f result) {
             return super.targetLeading(vShooterPos, vTargetPos, vTargetVelocity, projectileSpeed, result);
@@ -47,7 +48,7 @@ public class TargetLeadingTest {
 
     @Test
     public void targetLeading() {
-        EveryFrameCombatPlugin_ControllerMock con = new EveryFrameCombatPlugin_ControllerMock();
+        InputScreen_BattleSteeringMock con = new InputScreen_BattleSteeringMock();
         
         Vector2f vShooterPos = new Vector2f(0f, 0f);
         Vector2f vTargetPos = new Vector2f(0f, 10f);

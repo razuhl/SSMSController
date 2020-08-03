@@ -21,14 +21,17 @@ import com.fs.starfarer.api.combat.CombatEngineAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.api.combat.ShipCommand;
 import com.fs.starfarer.api.combat.ViewportAPI;
+import com.fs.starfarer.api.util.Pair;
 import com.fs.starfarer.combat.CombatState;
-import com.fs.starfarer.loading.specs.M;
 import com.fs.starfarer.prototype.Utils;
 import com.fs.state.AppDriver;
+import java.util.ArrayList;
+import java.util.List;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.ReadableVector2f;
 import org.lwjgl.util.vector.Vector2f;
 import ssms.controller.HandlerController;
+import ssms.controller.inputScreens.Indicators;
 
 /**
  *
@@ -39,11 +42,28 @@ import ssms.controller.HandlerController;
 public class SteeringController_FreeFlight extends SteeringController_Base {
     protected ShipAPI ps;
     protected HandlerController handler;
+    protected List<Pair<Indicators, String>> indicators;
+
+    @Override
+    public List<Pair<Indicators, String>> getIndicators() {
+        return indicators;
+    }
 
     @Override
     public boolean activate(ShipAPI playerShip, HandlerController controller, CombatEngineAPI engine) {
         this.ps = playerShip;
         this.handler = controller;
+        
+        if ( indicators == null ) {
+            indicators = new ArrayList<>();
+            indicators.add(new Pair(null, "Directional Steering"));
+            indicators.add(new Pair(Indicators.LeftStick, "Direction"));
+            indicators.add(new Pair(Indicators.LeftTrigger, "Backwards"));
+            indicators.add(new Pair(Indicators.RightTrigger, "Forwards"));
+            indicators.add(new Pair(Indicators.BumperLeft, "Strafe Left"));
+            indicators.add(new Pair(Indicators.BumperRight, "Strafe Right"));
+        }
+        
         return true;
     }
     
@@ -69,9 +89,9 @@ public class SteeringController_FreeFlight extends SteeringController_Base {
         
         //turning the ship based on joystick and accelerating with the triggers
         if ( allowAcceleration ) {
-            if ( handler.isAccelerating() ) {
+            if ( handler.isTriggerRight() ) {
                 ps.giveCommand(ShipCommand.ACCELERATE, null, -1);
-            } else if ( handler.isAcceleratingBackwards() ) {
+            } else if ( handler.isTriggerLeft() ) {
                 ps.giveCommand(ShipCommand.ACCELERATE_BACKWARDS, null, -1);
             } else if ( ps.getAcceleration() < 0.1f ) {
                 //if the player leaves the throttle idle close to zero we assume a full stop is desired
@@ -79,14 +99,14 @@ public class SteeringController_FreeFlight extends SteeringController_Base {
             }
         }
         if ( allowStrafe ) {
-            if ( handler.isStrafeLeft() ) {
+            if ( handler.isButtonBumperLeftPressed() ) {
                 ps.giveCommand(ShipCommand.STRAFE_LEFT, null, -1);
-            } else if ( handler.isStrafeRight() ) {
+            } else if ( handler.isButtonBumperRightPressed() ) {
                 ps.giveCommand(ShipCommand.STRAFE_RIGHT, null, -1);
             }
         }
         if ( allowTurning ) {
-            ReadableVector2f vDesiredHeading = handler.getHeading();
+            ReadableVector2f vDesiredHeading = handler.getLeftStick();
             if ( vDesiredHeading.getX() != 0 || vDesiredHeading.getY() != 0 ) {
                 float desiredFacing = Utils.Object((Vector2f)vDesiredHeading);
                 turnToAngle(ps,desiredFacing,timeAdvanced);
@@ -97,11 +117,12 @@ public class SteeringController_FreeFlight extends SteeringController_Base {
     @Override
     public void renderInWorldCoords(ViewportAPI viewport, float offsetFacingAngle) {
         Vector2f shipLocation = ps.getLocation();
-        ReadableVector2f heading = handler.getHeading();
+        ReadableVector2f heading = handler.getLeftStick();
         if ( heading.getX() == 0 && heading.getY() == 0 ) {
             heading = Utils.Object(ps.getFacing());
         }
         CombatState cs = (CombatState) AppDriver.getInstance().getState(CombatState.STATE_ID);
+        if ( cs.getWidgetPanel() == null ) return;
         float zoom = cs.getZoomFactor();
         
         //a pentagon that points in the direction the ship ship wants to head into, useful since the ship turns slowly 
