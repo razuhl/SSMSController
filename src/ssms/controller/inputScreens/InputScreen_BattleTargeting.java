@@ -25,15 +25,16 @@ import com.fs.starfarer.api.util.Pair;
 import com.fs.starfarer.combat.CombatState;
 import com.fs.starfarer.combat.entities.Ship;
 import com.fs.state.AppDriver;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.lwjgl.util.vector.Vector2f;
 import ssms.controller.HandlerController;
 import ssms.controller.SSMSControllerModPlugin;
+import ssms.controller.UtilObfuscation;
 
 /**
  *
@@ -167,7 +168,7 @@ public class InputScreen_BattleTargeting implements InputScreen {
         
         //center on target
         CombatState cs = (CombatState) AppDriver.getInstance().getState(CombatState.STATE_ID);
-        cs.setVideoFeedSource((com.fs.starfarer.combat.OoOO.oOOO.o) ps.getShipTarget());
+        UtilObfuscation.SetVideoFeedToShipTarget(cs, ps.getShipTarget());
     }
 
     @Override

@@ -17,13 +17,13 @@
  */
 package ssms.controller.inputScreens;
 
-import com.fs.graphics.OooO;
 import com.fs.graphics.Sprite;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.ViewportAPI;
 import com.fs.starfarer.api.ui.Alignment;
 import com.fs.starfarer.api.util.Pair;
 import java.awt.Color;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -35,6 +35,7 @@ import ssms.controller.ControllerMapping;
 import ssms.controller.HandlerController;
 import ssms.controller.SSMSControllerModPlugin;
 import static ssms.controller.SSMSControllerModPlugin.defaultIndicators;
+import ssms.controller.UtilObfuscation;
 import ssms.qol.ui.UIUtil;
 
 /**
@@ -61,14 +62,6 @@ public class InputScreenManager {
     }
     
     final public boolean updateIndicators() {
-        Method m;
-        try {
-            m = OooO.class.getMethod("super", String.class, String.class);
-        } catch (NoSuchMethodException | SecurityException ex) {
-            Global.getLogger(SSMSControllerModPlugin.class).log(Level.ERROR, "Failed to find method for registering and loading texture!", ex);
-            return false;
-        }
-        
         HandlerController controller = SSMSControllerModPlugin.controller;
         ControllerMapping mapping = controller != null ? controller.mapping : null;
         indicatorSprites.clear();
@@ -78,18 +71,12 @@ public class InputScreenManager {
             String img = mapping != null ? mapping.indicators.get(ind) : null;
             if ( img != null ) {
                 img = "graphics/indicators/" + img;
-                try {
-                    if ( OooO.\u00D200000(id) != null ) OooO.Ó00000(id);
-                    m.invoke(null, id, img);
-                } catch ( Throwable t ) {
-                    Global.getLogger(SSMSControllerModPlugin.class).log(Level.ERROR, "Failed to load indicator texture \"graphics/indicators/"+img+"\"!", t);
-                    ok = false;
-                }
+                ok = UtilObfuscation.RegisterTextureWithID(id, img);
                 Sprite sprite = new Sprite(id);
                 sprite.setBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
                 indicatorSprites.put(ind, sprite);
             } else {
-                if ( OooO.\u00D200000(id) != null ) OooO.Ó00000(id);
+                UtilObfuscation.TryRemoveTextureWithID(id);
                 indicatorSprites.put(ind, null);
             }
         }

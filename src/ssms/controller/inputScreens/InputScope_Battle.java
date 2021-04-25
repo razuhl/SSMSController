@@ -22,13 +22,13 @@ import com.fs.starfarer.api.combat.CombatEngineAPI;
 import com.fs.starfarer.api.combat.MutableStat;
 import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.combat.CombatState;
-import com.fs.starfarer.util.oOOO;
 import com.fs.state.AppDriver;
 import java.lang.reflect.Field;
 import org.apache.log4j.Level;
 import ssms.controller.EveryFrameCombatPlugin_Controller;
 import ssms.controller.HandlerController;
 import ssms.controller.SSMSControllerModPlugin;
+import ssms.controller.UtilObfuscation;
 import ssms.controller.steering.SteeringController;
 import ssms.controller.steering.SteeringController_FreeFlight;
 
@@ -63,7 +63,8 @@ public class InputScope_Battle implements InputScope {
             try {
                 createSteeringController(SSMSControllerModPlugin.primarySteeringMode, ps, gameController, engine);
             } catch (InstantiationException | IllegalAccessException ex) {
-                Global.getLogger(SSMSControllerModPlugin.class).log(Level.ERROR, "Primary Steering Mode contains a controller without a puclic no argument constructor! Using fallback controller.", ex);
+                if ( !"Activation failed!".equals(ex.getMessage()) )
+                    Global.getLogger(SSMSControllerModPlugin.class).log(Level.ERROR, "Primary Steering Mode contains a controller without a puclic no argument constructor! Using fallback controller.", ex);
                 if ( this.steeringController != null ) this.steeringController.discard();
                 this.steeringController = new SteeringController_FreeFlight();
                 this.steeringController.activate(ps, gameController, engine);
@@ -85,7 +86,8 @@ public class InputScope_Battle implements InputScope {
             try {
                 createSteeringController(steeringMode, ps, gameController, engine);
             } catch (InstantiationException | IllegalAccessException ex) {
-                Global.getLogger(SSMSControllerModPlugin.class).log(Level.ERROR, "Steering Mode contains a controller without a puclic no argument constructor! Using fallback controller.", ex);
+                if ( !"Activation failed!".equals(ex.getMessage()) )
+                    Global.getLogger(SSMSControllerModPlugin.class).log(Level.ERROR, "Steering Mode contains a controller without a puclic no argument constructor! Using fallback controller.", ex);
                 if ( this.steeringController != null ) this.steeringController.discard();
                 this.steeringController = new SteeringController_FreeFlight();
                 this.steeringController.activate(ps, gameController, engine);
@@ -153,20 +155,7 @@ public class InputScope_Battle implements InputScope {
     }
     
     public void adjustZoom() {
-        if ( cs.getZoomFactor() != desiredZoomFactor ) {
-            try {
-                Field f = CombatState.class.getDeclaredField("zoomTracker");
-                if ( !f.isAccessible() ) f.setAccessible(true);
-                oOOO zoomTracker = (oOOO) f.get(cs);
-                f = oOOO.class.getDeclaredField("\u00D800000");
-                if ( !f.isAccessible() ) f.setAccessible(true);
-                f.set(zoomTracker, desiredZoomFactor);
-                zoomTracker.Ó00000(desiredZoomFactor);
-            } catch (Throwable t) {
-                engine.getCombatUI().addMessage(0, "error: "+t.getMessage());
-                Global.getLogger(SSMSControllerModPlugin.class).log(Level.ERROR, "Failed to adjust zoom tracker, ensure SSMSUnlock is installed!", t);
-            }
-        }
+        UtilObfuscation.SetZoom(cs, desiredZoomFactor);
     }
     
     public void setZoom(float zoomFactor) {

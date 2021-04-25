@@ -30,7 +30,6 @@ import com.fs.starfarer.api.impl.combat.MineStrikeStats;
 import com.fs.starfarer.api.util.Pair;
 import com.fs.starfarer.combat.CombatState;
 import com.fs.starfarer.combat.entities.Ship;
-import com.fs.starfarer.combat.systems.R;
 import com.fs.starfarer.prototype.Utils;
 import com.fs.state.AppDriver;
 import java.lang.reflect.Field;
@@ -45,6 +44,8 @@ import ssms.controller.EveryFrameCombatPlugin_Controller;
 import ssms.controller.HandlerController;
 import ssms.controller.MineStrikeStatsFixed;
 import ssms.controller.SSMSControllerModPlugin;
+import ssms.controller.UtilObfuscation;
+import ssms.controller.Util_Steering;
 import ssms.controller.steering.SteeringController;
 
 /**
@@ -161,7 +162,7 @@ public class InputScreen_BattleSteering implements InputScreen {
 
                         if ( targetLocation == null ) targetLocation = targetFrontal(ps.getLocation(),weapon.getRange(),ps.getFacing(),v1);
 
-                        ((R)weapon).getAimTracker().o00000(targetLocation);
+                        UtilObfuscation.AimWeapon(weapon, targetLocation);
                     }
                     if ( handler.isButtonAPressed() ) ps.giveCommand(ShipCommand.FIRE, v1, -1);
                 }
@@ -208,16 +209,10 @@ public class InputScreen_BattleSteering implements InputScreen {
                     if ( ps.getShipTarget() != null ) {
                         //due to a bug in vanilla coding the getAI method must return not null in order for the minestrike to use the override
                         //replacing the script with a corrected version that skips the AI check
-                        if ( ps.getSystem() != null && com.fs.starfarer.combat.systems.F.class.isAssignableFrom(ps.getSystem().getClass()) ) {
-                            com.fs.starfarer.combat.systems.F system = (com.fs.starfarer.combat.systems.F)ps.getSystem();
-                            if ( system.getScript() != null && MineStrikeStats.class == system.getScript().getClass() ) {
-                                try {
-                                    Field f = com.fs.starfarer.combat.systems.F.class.getDeclaredField("\u00F800000");
-                                    f.setAccessible(true);
-                                    f.set(system, new MineStrikeStatsFixed());
-                                } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException ex) {
-                                    Global.getLogger(SSMSControllerModPlugin.class).log(Level.ERROR, "Failed to get field \u00F800000 on script, ensure SSMSUnlock is installed!", ex);
-                                }
+                        Object script = UtilObfuscation.TryGetScript(ps.getSystem());
+                        if ( script != null ) {
+                            if ( MineStrikeStats.class == script.getClass() ) {
+                                UtilObfuscation.SetScript(ps.getSystem(), new MineStrikeStatsFixed());
                             }
                         }
                         ps.getAIFlags().setFlag(ShipwideAIFlags.AIFlags.SYSTEM_TARGET_COORDS, 1, ps.getShipTarget().getLocation());
@@ -257,8 +252,7 @@ public class InputScreen_BattleSteering implements InputScreen {
         }// else wasShieldOn = false;
         
         //center on player ship
-        cs.setVideoFeedSource(null);
-        cs.getViewMouseOffset().\u00D200000(0, 0);
+        UtilObfuscation.SetVideoFeedToPlayerShip(cs);
     }
     
     @Override
@@ -273,7 +267,7 @@ public class InputScreen_BattleSteering implements InputScreen {
                         ps.getShield().forceFacing(ps.getFacing() + scope.getOffsetFacingAngle());
                     } else {
                         Vector2f v = Vector2f.sub(ps.getShipTarget().getLocation(), ps.getLocation(), new Vector2f());
-                        ps.getShield().forceFacing(Utils.Object(v));
+                        ps.getShield().forceFacing(Util_Steering.getFacingFromHeading(v));
                     }
                 }
             }

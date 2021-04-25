@@ -31,6 +31,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.ReadableVector2f;
 import org.lwjgl.util.vector.Vector2f;
 import ssms.controller.HandlerController;
+import ssms.controller.Util_Steering;
 import ssms.controller.inputScreens.Indicators;
 
 /**
@@ -108,7 +109,7 @@ public class SteeringController_FreeFlight extends SteeringController_Base {
         if ( allowTurning ) {
             ReadableVector2f vDesiredHeading = handler.getLeftStick();
             if ( vDesiredHeading.getX() != 0 || vDesiredHeading.getY() != 0 ) {
-                float desiredFacing = Utils.Object((Vector2f)vDesiredHeading);
+                float desiredFacing = Util_Steering.getFacingFromHeading((Vector2f)vDesiredHeading);
                 turnToAngle(ps,desiredFacing,timeAdvanced);
             }
         }
@@ -119,7 +120,7 @@ public class SteeringController_FreeFlight extends SteeringController_Base {
         Vector2f shipLocation = ps.getLocation();
         ReadableVector2f heading = handler.getLeftStick();
         if ( heading.getX() == 0 && heading.getY() == 0 ) {
-            heading = Utils.Object(ps.getFacing());
+            heading = Util_Steering.getHeadingFromFacing(ps.getFacing());
         }
         CombatState cs = (CombatState) AppDriver.getInstance().getState(CombatState.STATE_ID);
         if ( cs.getWidgetPanel() == null ) return;
@@ -146,7 +147,7 @@ public class SteeringController_FreeFlight extends SteeringController_Base {
         Vector2f pentagonCenter = new Vector2f(shipLocation.x + vHeadingNormalised.x * ps.getCollisionRadius() * (1f + 2f * radius / ps.getCollisionRadius()), shipLocation.y + vHeadingNormalised.y * ps.getCollisionRadius() * (1f + 2f * radius / ps.getCollisionRadius()));
         float angleIncrement = (float) Math.toRadians(360.0f / 5f);
         //rotating the pentagon so that it points in the right direction and the missing slice is opposite to that point.
-        float angle = (float) Math.toRadians(Utils.Object(new Vector2f(heading))) + 3f * angleIncrement;
+        float angle = (float) Math.toRadians(Util_Steering.getFacingFromHeading(new Vector2f(heading))) + 3f * angleIncrement;
 
         GL11.glBegin(GL11.GL_TRIANGLE_FAN);
         GL11.glVertex2f(pentagonCenter.x, pentagonCenter.y);

@@ -17,22 +17,11 @@
  */
 package ssms.controller;
 
-import com.fs.graphics.OooO;
-import com.fs.graphics.TextureLoader;
 import com.fs.starfarer.api.BaseModPlugin;
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.combat.CombatEngineAPI;
-import com.fs.starfarer.loading.LoadingUtils;
-import com.fs.util.C;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Method;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +29,6 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.log4j.Priority;
 import org.lwjgl.input.Controller;
 import org.lwjgl.input.Controllers;
 import ssms.controller.inputScreens.Indicators;
@@ -165,17 +153,13 @@ public final class SSMSControllerModPlugin extends BaseModPlugin {
                     return name != null && name.endsWith(".png");
                 }
             };
-        for ( com.fs.util.C.Oo repo : com.fs.util.C.Ó00000().Ô00000() ) {
-            if ( repo == null || repo.Ó00000 == null || repo.o00000 != C.o.String ) continue;
-            //int imagesFound = 0;
-            File fRepo = new File(repo.Ó00000);
-            if ( fRepo.exists() && fRepo.isDirectory() ) {
-                File fIndicators = new File(fRepo,"graphics/indicators");
-                if ( fIndicators.exists() && fIndicators.isDirectory() ) {
-                    for ( String filename : fIndicators.list(filterPngFiles) ) {
-                        if ( !icons.contains(filename) ) icons.add(filename);
-                        //imagesFound++;
-                    }
+        List<File> repoDirectories = UtilObfuscation.GetRepositoryDirectories();
+        for ( File f : repoDirectories ) {
+            File fIndicators = new File(f,"graphics/indicators");
+            if ( fIndicators.exists() && fIndicators.isDirectory() ) {
+                for ( String filename : fIndicators.list(filterPngFiles) ) {
+                    if ( !icons.contains(filename) ) icons.add(filename);
+                    //imagesFound++;
                 }
             }
             //Global.getLogger(SSMSControllerModPlugin.class).log(Level.ERROR, "Found "+imagesFound+" .png images for indicators in repo \""+repo.Ó00000+"\".");
