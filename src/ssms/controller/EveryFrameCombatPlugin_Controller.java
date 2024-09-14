@@ -41,7 +41,7 @@ import ssms.controller.inputScreens.InputScreenManager;
 public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugin {
     protected CombatEngineAPI engine;
     protected float nextLog;
-    protected boolean wasShowingWarroom = false, skipFrame = false;
+    protected boolean wasShowingWarroom = false, skipFrame = true;
 
     public EveryFrameCombatPlugin_Controller() {
         //Global.getLogger(SSMSControllerModPlugin.class).log(Level.ERROR, "created every frame");
@@ -84,7 +84,6 @@ public class EveryFrameCombatPlugin_Controller extends BaseEveryFrameCombatPlugi
                 Global.getLogger(SSMSControllerModPlugin.class).log(Level.ERROR, "Failed to transition into battle scope!");
                 InputScreenManager.getInstance().transitionToScope("NoScope");
             } else {
-                //Global.getLogger(SSMSControllerModPlugin.class).log(Level.INFO, "Transitioned to battle scope.");
                 skipFrame = false;
             }
         }

@@ -41,7 +41,7 @@ import org.lwjgl.util.vector.Vector2f;
 public class UtilObfuscation {
     public static void AimWeapon(WeaponAPI weapon, Vector2f targetLocation) {
         //((com.fs.starfarer.combat.systems.R)weapon).getAimTracker().new(targetLocation);
-        ((com.fs.starfarer.combat.systems.R)weapon).getAimTracker().Ó00000(targetLocation);
+        ((com.fs.starfarer.combat.systems.thissuper)weapon).getAimTracker().Ó00000(targetLocation);
         //((com.fs.starfarer.combat.systems.R)weapon).getAimTracker().o00000(targetLocation);
     }
     
@@ -51,9 +51,9 @@ public class UtilObfuscation {
     protected static boolean InitShipSystemImpl() {
         if ( shipSystemImpl == null ) {
             try {
-                shipSystemImpl = Class.forName("com.fs.starfarer.combat.systems.return");
+                shipSystemImpl = Class.forName("com.fs.starfarer.combat.systems.OOoO");
                 mShipSystemGetScript = shipSystemImpl.getMethod("getScript");
-                fShipSystemScript = shipSystemImpl.getDeclaredField("\u00F800000");
+                fShipSystemScript = shipSystemImpl.getDeclaredField("float");
                 fShipSystemScript.setAccessible(true);
             } catch (ClassNotFoundException | NoSuchMethodException | NoSuchFieldException | SecurityException ex) {
                 Global.getLogger(SSMSControllerModPlugin.class).log(Level.ERROR, "Failed to reflect ship system implementation, ensure SSMSUnlock is installed!", ex);
@@ -85,14 +85,14 @@ public class UtilObfuscation {
 
     public static List<File> GetRepositoryDirectories() {
         List<File> files = new ArrayList<>();
-        for ( com.fs.util.Object.Oo repo : com.fs.util.Object.Object().\u00D400000() ) {
+        for ( com.fs.util.Object.Oo repo : com.fs.util.Object.Object().Ô00000() ) {
             com.fs.util.Object.o enumValue;
-            try {
-                enumValue = repo != null ? (com.fs.util.Object.o) repo.getClass().getField("o00000").get(repo) : com.fs.util.Object.o.o00000;
-            } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException ex) {
-                enumValue = com.fs.util.Object.o.Ô00000;
-            }
-            if ( repo == null || repo.Object == null || enumValue != com.fs.util.Object.o.Ô00000 ) continue;
+            //try {
+                enumValue = repo != null ? (com.fs.util.Object.o) repo.o00000/*getClass().getField("o00000").get(repo)*/ : com.fs.util.Object.o.String;
+            /*} catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException ex) {
+                enumValue = com.fs.util.Object.o.String;
+            }*/
+            if ( repo == null || repo.Object == null || enumValue != com.fs.util.Object.o.String ) continue;
             //int imagesFound = 0;
             File fRepo = new File(repo.Object);
             if ( fRepo.exists() && fRepo.isDirectory() ) {
@@ -107,10 +107,10 @@ public class UtilObfuscation {
     protected static boolean InitTextureLoader() {
         if ( mTextureUtilGetTexture == null ) {
             try {
-                Class textureUtil = Class.forName("com.fs.graphics.H");
+                Class textureUtil = Class.forName("com.fs.graphics.G");
                 mTextureUtilRegisterTexture = textureUtil.getMethod("o00000", String.class, String.class);
-                mTextureUtilGetTexture = textureUtil.getMethod("\u00D200000", String.class);
-                mTextureUtilRemoveTexture = textureUtil.getMethod("Object", String.class);
+                mTextureUtilGetTexture = textureUtil.getMethod("Ò00000", String.class);
+                mTextureUtilRemoveTexture = textureUtil.getMethod("o00000", String.class);
             } catch (ClassNotFoundException | NoSuchMethodException | SecurityException ex) {
                 Global.getLogger(SSMSControllerModPlugin.class).log(Level.ERROR, "Failed to reflect texture util implementation, ensure SSMSUnlock is installed!", ex);
                 mTextureUtilGetTexture = null;
@@ -153,10 +153,10 @@ public class UtilObfuscation {
     protected static boolean InitZoomTracker() {
         if ( fZoomTrackerSetMaximum == null ) {
             try {
-                Class zoomTracker = Class.forName("com.fs.starfarer.util.A");
-                fZoomTrackerSetMaximum = zoomTracker.getDeclaredField("\u00D300000");
+                Class zoomTracker = Class.forName("com.fs.starfarer.util.super");
+                fZoomTrackerSetMaximum = zoomTracker.getDeclaredField("void");
                 fZoomTrackerSetMaximum.setAccessible(true);
-                fZoomTrackerSetMinimum = zoomTracker.getDeclaredField("void");
+                fZoomTrackerSetMinimum = zoomTracker.getDeclaredField("\u00D300000");
                 fZoomTrackerSetMinimum.setAccessible(true);
             } catch (ClassNotFoundException | SecurityException | NoSuchFieldException ex) {
                 Global.getLogger(SSMSControllerModPlugin.class).log(Level.ERROR, "Failed to reflect zoom tracker, ensure SSMSUnlock is installed!", ex);
